@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+
+        @page { size: 16in 9in; margin: 0; }
+        body {
+            background-color: #050819;
+            color: #ffffff;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0; padding: 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .page {
+            width: 16in;
+            height: 9in;
+            page-break-after: always;
+            box-sizing: border-box;
+            padding: 0.5in 0.7in;
+            background: #0a121e;
+            border: 2px solid #00f2fe;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #00f2fe;
+            padding-bottom: 0.1in;
+        }
+        .title {
+            font-size: 24pt;
+            font-weight: 800;
+            color: #00f2fe;
+            text-transform: uppercase;
+        }
+        .badge {
+            background: rgba(0, 242, 254, 0.2);
+            border: 1px solid #00f2fe;
+            color: #00f2fe;
+            padding: 4pt 12pt;
+            border-radius: 20pt;
+            font-weight: bold;
+            font-size: 12pt;
+        }
+        .body-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 0.3in;
+            margin-top: 0.2in;
+            flex-grow: 1;
+            align-items: center;
+        }
+        .body-full {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+            margin-top: 0.2in;
+        }
+        .content {
+            font-size: 14pt;
+            line-height: 1.6;
+            color: #e0e6ed;
+        }
+        .content ul { margin: 0; padding-left: 20pt; }
+        .content li { margin-bottom: 10pt; }
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 0.1in;
+            font-size: 11pt;
+            color: #78909c;
+        }
+        .slide-img {
+            width: 100%;
+            max-height: 5.5in;
+            object-fit: contain;
+            border: 1px solid #00f2fe;
+            border-radius: 8pt;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.2);
+        }
+        .slide-img-full {
+            width: 90%;
+            max-height: 6in;
+            object-fit: contain;
+            border: 1px solid #00f2fe;
+            border-radius: 8pt;
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.3);
+        }
+        .team-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid #00f2fe;
+            border-radius: 10pt;
+            padding: 14pt;
+            margin-bottom: 12pt;
+        }
+        table.spec-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11pt;
+            margin-top: 5pt;
+        }
+        table.spec-table th, table.spec-table td {
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            padding: 6pt 10pt;
+            text-align: left;
+        }
+        table.spec-table th {
+            background: rgba(0, 242, 254, 0.15);
+            color: #00f2fe;
+            font-weight: bold;
+        }
+        .logo-box {
+            width: 180px;
+            height: 180px;
+            border: 2px dashed #00f2fe;
+            border-radius: 12pt;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #00f2fe;
+            font-weight: bold;
+            font-size: 14pt;
+            background: rgba(0, 242, 254, 0.05);
+            margin: 0 auto;
+        }
+    
+body {
+    margin: 0;
+    padding: 0;
+    background: #0c1017;
+    overflow: hidden;
+    width: 1920px;
+    height: 1080px;
+}
+.page {
+    width: 1920px !important;
+    height: 1080px !important;
+    padding: 40px 60px !important;
+    box-sizing: border-box !important;
+    transform: scale(1.0) !important;
+}
+.title { font-size: 24pt !important; }
+.content { font-size: 15pt !important; }
+.spec-table { font-size: 11pt !important; }
+.data-table { font-size: 12pt !important; }
+</style>
+</head>
+<body>
+<div class="page">
+
+        <div class="header"><div class="title">СИСТЕМА ТРЕБОВАНИЙ (БТ / ФТТ / НФТ)</div><div class="badge">Слайд 3 / 15</div></div>
+        <div class="body-full">
+            <table class="spec-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Категория требований</th>
+                        <th>Формулировка требований (Согласованы и верифицированы)</th>
+                        <th style="width: 25%;">Критерий приёмки / Метрика</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Бизнес-требования (БТ)</strong></td>
+                        <td>• Исключение аварийных остановов ЭЛОУ-АВТ-5/5 из-за ошибок оператора.<br>• Сокращение времени подготовки персонала с 6 месяцев до 3 недель.<br>• Экономический эффект от предотвращения простоя — 4.8 млн руб/час.</td>
+                        <td>Сокращение простоя > 85%<br>Окупаемость < 1.2 мес</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Функционально-технические (ФТТ)</strong></td>
+                        <td>• Численное решение 28 тарелок К-1 в реальном времени (10 Гц RK4).<br>• Прямой протокол Modbus TCP (порт 5020) для подключения реальных ПЛК.<br>• 8 промышленных аварийных сценариев ПАЗ + Конструктор Инструктора.</td>
+                        <td>10 Гц расчет RK4<br>Modbus TCP 5020<br>8/8 сценариев + Авторство</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Нефункциональные (НФТ)</strong></td>
+                        <td>• 100% Air-Gap изоляция (0 внешних сетевых вызовов, все ресурсы локальны).<br>• Задержка отрисовки интерфейса SCADA ISA-101 < 333 мс (3 Гц RAF).<br>• Логирование и аудит 100% действий оператора в формате JSON.</td>
+                        <td>Air-Gap 100%<br>Latency < 333ms<br>Аудит 100%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="footer"><span>CASE-IN IT-Чемпионат 2026</span><span>Требования к решению</span></div>
+    </div>
+
+    
+</div>
+</body>
+</html>

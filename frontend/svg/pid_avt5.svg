@@ -1,0 +1,117 @@
+<svg id="pid-svg" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Градиенты для 2.5D объема -->
+    <linearGradient id="column-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1f2833" />
+      <stop offset="50%" stop-color="#3b4d61" />
+      <stop offset="100%" stop-color="#0b0c10" />
+    </linearGradient>
+    <linearGradient id="desalter-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2c3e50" />
+      <stop offset="50%" stop-color="#34495e" />
+      <stop offset="100%" stop-color="#1a252f" />
+    </linearGradient>
+    <linearGradient id="fire-grad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#ff4c4c" stop-opacity="0.8" />
+      <stop offset="50%" stop-color="#ffa500" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#ffff00" stop-opacity="0" />
+    </linearGradient>
+    
+    <!-- Анимация пульсации потока -->
+    <style>
+      .flow-line {
+        stroke: #66fcf1;
+        stroke-width: 3;
+        fill: none;
+        stroke-dasharray: 8, 8;
+        animation: flow-animation 2s linear infinite;
+      }
+      .flow-line.hot {
+        stroke: #ff4c4c;
+      }
+      .flow-line.vacuum {
+        stroke: #a29bfe;
+      }
+      @keyframes flow-animation {
+        to {
+          stroke-dashoffset: -20;
+        }
+      }
+      .flame {
+        animation: flame-pulse 0.5s ease-in-out infinite alternate;
+        transform-origin: 220px 480px;
+      }
+      @keyframes flame-pulse {
+        0% { transform: scaleY(0.9) scaleX(0.95); }
+        100% { transform: scaleY(1.1) scaleX(1.05); }
+      }
+      .smoke {
+        animation: smoke-drift 3s ease-in-out infinite;
+        opacity: 0;
+      }
+      @keyframes smoke-drift {
+        0% { transform: translateY(0) scale(1); opacity: 0.5; }
+        50% { opacity: 0.8; }
+        100% { transform: translateY(-80px) scale(1.5); opacity: 0; }
+      }
+    </style>
+  </defs>
+
+  <!-- Фон -->
+  <rect width="100%" height="100%" fill="#0b0c10" />
+
+  <!-- ─── ТРУБОПРОВОДЫ (Потоки) ─── -->
+  <!-- Сырьё -> Теплообменник Т-1 -> ЭЛОУ -->
+  <path id="flow-raw-to-t1" class="flow-line" d="M 50 150 L 150 150" />
+  <path id="flow-t1-to-elou" class="flow-line" d="M 150 150 L 250 150" />
+  
+  <!-- ЭЛОУ -> Т-17 -> Печь П-1 -->
+  <path id="flow-elou-to-t17" class="flow-line" d="M 330 150 L 400 150" />
+  <path id="flow-t17-to-furnace" class="flow-line" d="M 400 150 L 400 450 L 180 450" />
+  
+  <!-- Печь П-1 -> Колонна К-1 -->
+  <path id="flow-furnace-to-k1" class="flow-line hot" d="M 220 420 L 530 420" />
+  
+  <!-- Колонна К-1 -> Вакуумная К-2 -->
+  <path id="flow-k1-to-k2" class="flow-line hot" d="M 580 450 L 750 450" />
+
+  <!-- ─── ОБОРУДОВАНИЕ ─── -->
+  <!-- Насос Н-1 -->
+  <circle cx="50" cy="150" r="15" fill="#1f2833" stroke="#66fcf1" stroke-width="2" />
+  <text x="50" y="155" font-family="Inter" font-size="10" fill="#66fcf1" text-anchor="middle" font-weight="bold">Н-1</text>
+  
+  <!-- Теплообменник Т-1/1 -->
+  <rect x="130" y="125" width="40" height="50" rx="5" fill="#1f2833" stroke="#66fcf1" stroke-width="2" />
+  <text x="150" y="155" font-family="Inter" font-size="10" fill="#c5c6c7" text-anchor="middle">Т-1/1</text>
+
+  <!-- Блок ЭЛОУ (Электродегидратор Е-15) -->
+  <rect x="250" y="100" width="80" height="100" rx="10" fill="url(#desalter-grad)" stroke="#45a29e" stroke-width="2" />
+  <text x="290" y="145" font-family="Inter" font-size="12" fill="#66fcf1" text-anchor="middle" font-weight="bold">ЭЛОУ</text>
+  <text id="txt-elou-salt" x="290" y="165" font-family="Inter" font-size="9" fill="#ffa500" text-anchor="middle">Соли: -- мг/л</text>
+
+  <!-- Теплообменник Т-17 -->
+  <rect x="380" y="125" width="40" height="50" rx="5" fill="#1f2833" stroke="#66fcf1" stroke-width="2" />
+  <text x="400" y="155" font-family="Inter" font-size="10" fill="#c5c6c7" text-anchor="middle">Т-17</text>
+
+  <!-- Печь П-1 -->
+  <path d="M 150 480 L 150 400 L 220 400 L 220 480 Z" fill="#1f2833" stroke="#ff4c4c" stroke-width="2" />
+  <polygon points="175,400 175,350 195,350 195,400" fill="#1f2833" stroke="#ff4c4c" stroke-width="2" />
+  <text x="185" y="440" font-family="Inter" font-size="14" fill="#ff4c4c" text-anchor="middle" font-weight="bold">П-1</text>
+  <text id="txt-furnace-temp" x="185" y="460" font-family="Inter" font-size="9" fill="#c5c6c7" text-anchor="middle">-- °C</text>
+  
+  <!-- Дым и пламя в печи -->
+  <path id="smoke-effect" class="smoke" d="M 185 340 Q 175 320 185 300 T 185 260" fill="none" stroke="#555" stroke-width="6" stroke-linecap="round" />
+  <path id="flame-effect" class="flame" d="M 170 480 Q 185 450 195 480 Z" fill="url(#fire-grad)" />
+
+  <!-- Атмосферная колонна К-1 -->
+  <rect x="530" y="80" width="60" height="360" rx="8" fill="url(#column-grad)" stroke="#66fcf1" stroke-width="2" />
+  <text x="560" y="240" font-family="Inter" font-size="16" fill="#66fcf1" text-anchor="middle" font-weight="bold">К-1</text>
+  <text id="txt-k1-top-t" x="560" y="110" font-family="Inter" font-size="9" fill="#ffa500" text-anchor="middle">-- °C</text>
+  <text id="txt-k1-bot-t" x="560" y="420" font-family="Inter" font-size="9" fill="#ffa500" text-anchor="middle">-- °C</text>
+
+  <!-- Вакуумная колонна К-2 -->
+  <rect x="750" y="50" width="70" height="410" rx="8" fill="url(#column-grad)" stroke="#a29bfe" stroke-width="2" />
+  <text x="785" y="240" font-family="Inter" font-size="16" fill="#a29bfe" text-anchor="middle" font-weight="bold">К-2</text>
+  <text id="txt-k2-press" x="785" y="80" font-family="Inter" font-size="9" fill="#a29bfe" text-anchor="middle">-- МПа</text>
+  <text id="txt-k2-bot-t" x="785" y="440" font-family="Inter" font-size="9" fill="#ffa500" text-anchor="middle">-- °C</text>
+</svg>

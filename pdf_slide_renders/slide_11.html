@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+
+        @page { size: 16in 9in; margin: 0; }
+        body {
+            background-color: #050819;
+            color: #ffffff;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0; padding: 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .page {
+            width: 16in;
+            height: 9in;
+            page-break-after: always;
+            box-sizing: border-box;
+            padding: 0.5in 0.7in;
+            background: #0a121e;
+            border: 2px solid #00f2fe;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #00f2fe;
+            padding-bottom: 0.1in;
+        }
+        .title {
+            font-size: 24pt;
+            font-weight: 800;
+            color: #00f2fe;
+            text-transform: uppercase;
+        }
+        .badge {
+            background: rgba(0, 242, 254, 0.2);
+            border: 1px solid #00f2fe;
+            color: #00f2fe;
+            padding: 4pt 12pt;
+            border-radius: 20pt;
+            font-weight: bold;
+            font-size: 12pt;
+        }
+        .body-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 0.3in;
+            margin-top: 0.2in;
+            flex-grow: 1;
+            align-items: center;
+        }
+        .body-full {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+            margin-top: 0.2in;
+        }
+        .content {
+            font-size: 14pt;
+            line-height: 1.6;
+            color: #e0e6ed;
+        }
+        .content ul { margin: 0; padding-left: 20pt; }
+        .content li { margin-bottom: 10pt; }
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 0.1in;
+            font-size: 11pt;
+            color: #78909c;
+        }
+        .slide-img {
+            width: 100%;
+            max-height: 5.5in;
+            object-fit: contain;
+            border: 1px solid #00f2fe;
+            border-radius: 8pt;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.2);
+        }
+        .slide-img-full {
+            width: 90%;
+            max-height: 6in;
+            object-fit: contain;
+            border: 1px solid #00f2fe;
+            border-radius: 8pt;
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.3);
+        }
+        .team-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid #00f2fe;
+            border-radius: 10pt;
+            padding: 14pt;
+            margin-bottom: 12pt;
+        }
+        table.spec-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11pt;
+            margin-top: 5pt;
+        }
+        table.spec-table th, table.spec-table td {
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            padding: 6pt 10pt;
+            text-align: left;
+        }
+        table.spec-table th {
+            background: rgba(0, 242, 254, 0.15);
+            color: #00f2fe;
+            font-weight: bold;
+        }
+        .logo-box {
+            width: 180px;
+            height: 180px;
+            border: 2px dashed #00f2fe;
+            border-radius: 12pt;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #00f2fe;
+            font-weight: bold;
+            font-size: 14pt;
+            background: rgba(0, 242, 254, 0.05);
+            margin: 0 auto;
+        }
+    
+body {
+    margin: 0;
+    padding: 0;
+    background: #0c1017;
+    overflow: hidden;
+    width: 1920px;
+    height: 1080px;
+}
+.page {
+    width: 1920px !important;
+    height: 1080px !important;
+    padding: 40px 60px !important;
+    box-sizing: border-box !important;
+    transform: scale(1.0) !important;
+}
+.title { font-size: 24pt !important; }
+.content { font-size: 15pt !important; }
+.spec-table { font-size: 11pt !important; }
+.data-table { font-size: 12pt !important; }
+</style>
+</head>
+<body>
+<div class="page">
+
+        <div class="header"><div class="title">ЭКОНОМИЧЕСКАЯ ЭФФЕКТИВНОСТЬ И TCO 2026</div><div class="badge">Слайд 11 / 15</div></div>
+        <div class="body-grid">
+            <div class="content" style="grid-column: span 2;">
+                <table class="data-table" style="width: 100%; border-collapse: collapse; margin-bottom: 12pt;">
+                    <thead>
+                        <tr style="background: rgba(0, 242, 254, 0.15); color: #00f2fe;">
+                            <th style="padding: 8pt; text-align: left;">Показатель эффективности</th>
+                            <th style="padding: 8pt; text-align: left;">Традиционный подбор (Aspen)</th>
+                            <th style="padding: 8pt; text-align: left;">Цифровой Двойник КТК 2026</th>
+                            <th style="padding: 8pt; text-align: left;">Экономический эффект</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <td style="padding: 8pt;"><strong>Лицензии ПО и Вендор (OpEx)</strong></td>
+                            <td style="padding: 8pt; color: #ff4e50;">~45.0 млн руб/год</td>
+                            <td style="padding: 8pt; color: #38ef7d;"><strong>0.0 млн руб (Open-Source)</strong></td>
+                            <td style="padding: 8pt; color: #38ef7d;">Экономия 45 млн руб</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <td style="padding: 8pt;"><strong>CapEx (Серверы) и ФОТ внедрения</strong></td>
+                            <td style="padding: 8pt;">0.0 руб</td>
+                            <td style="padding: 8pt; color: #ffc800;"><strong>~4.5 млн руб (Разово)</strong></td>
+                            <td style="padding: 8pt; color: #ffc800;">Адекватная оценка TCO</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <td style="padding: 8pt;"><strong>Риск аварийного простоя (за 1 час)</strong></td>
+                            <td style="padding: 8pt; color: #ff4e50;">4 800 000 руб/час</td>
+                            <td style="padding: 8pt; color: #38ef7d;"><strong>Предотвращение 100%</strong></td>
+                            <td style="padding: 8pt; color: #38ef7d;">Сохранение капитала</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <td style="padding: 8pt;"><strong>Срок окупаемости (Payback Period)</strong></td>
+                            <td style="padding: 8pt; color: #ff4e50;">36 месяцев</td>
+                            <td style="padding: 8pt; color: #38ef7d;"><strong>&lt; 2 месяцев</strong></td>
+                            <td style="padding: 8pt; color: #38ef7d;">Мгновенный возврат</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8pt;"><strong>NPV (Чистый дисконтированный доход, 3 года)</strong></td>
+                            <td style="padding: 8pt; color: #78909c;">N/A</td>
+                            <td style="padding: 8pt; color: #38ef7d;"><strong>> 125 млн руб.</strong></td>
+                            <td style="padding: 8pt; color: #38ef7d;">Высокая инвест-привлекательность</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div style="padding: 10pt 15pt; background: rgba(56, 239, 125, 0.08); border-left: 4px solid #38ef7d; border-radius: 6px; font-size: 12pt; color: #e0e0e0;">
+                    <strong style="color: #38ef7d;">📊 Фискальная модель 2026 (Омский НПЗ ПАО «Газпром нефть»):</strong><br>
+                    • <strong>Обратный акциз (ст. 200 п. 27 НК РФ):</strong> 1 850 руб/т нефтяного сырья<br>
+                    • <strong>Налоговые параметры 2026 года:</strong> НДС 22%, Налог на прибыль 25%, Налоговый Щит CapEx 25%.
+                </div>
+            </div>
+        </div>
+        <div class="footer"><span>CASE-IN IT-Чемпионат 2026</span><span>Экономический расчет</span></div>
+    </div>
+
+    
+</div>
+</body>
+</html>

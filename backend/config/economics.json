@@ -1,0 +1,9 @@
+{
+  "downtime_cost_per_hour": 4800000.0,
+  "vat_rate": 0.22,
+  "corporate_income_tax_rate": 0.25,
+  "lost_met_subsidy_per_ton": 1850.0,
+  "repair_capex_tax_shield_ratio": 0.25,
+  "refinery_profile": "Омский НПЗ ПАО «Газпром нефть» (Индекс Нельсона 10.7)",
+  "regional_coefficient_k_reg": 1.35
+}

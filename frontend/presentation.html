@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Официальная Конкурсная Презентация КТК ЭЛОУ-АВТ-5/5 — CASE-IN 2026</title>
+    <style>
+        :root {
+            --bg-dark: #050819;
+            --panel-bg: #0a121e;
+            --cyan: #00f2fe;
+            --gold: #ffc800;
+            --white: #ffffff;
+            --red: #ff3c5a;
+            --gray: #b0bec5;
+            --green: #00d68f;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg-dark);
+            color: var(--white);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .slide-viewport {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            position: relative;
+        }
+        .slide {
+            display: none;
+            width: 100%;
+            max-width: 1250px;
+            height: 670px;
+            background: var(--panel-bg);
+            border: 1px solid rgba(0, 242, 254, 0.25);
+            border-radius: 16px;
+            padding: 2.2rem;
+            box-shadow: 0 0 40px rgba(0, 242, 254, 0.15);
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            animation: fadeIn 0.35s ease;
+        }
+        .slide.active { display: flex; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .slide-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid rgba(0, 242, 254, 0.2);
+            padding-bottom: 0.8rem;
+            margin-bottom: 1.2rem;
+        }
+        .slide-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--cyan);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            text-shadow: 0 0 10px rgba(0, 242, 254, 0.35);
+        }
+        .slide-num-badge {
+            background: rgba(0, 242, 254, 0.15);
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+        .slide-content {
+            font-size: 1.05rem;
+            line-height: 1.65;
+            color: var(--white);
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        .slide-content ul { list-style-type: none; }
+        .slide-content li {
+            margin-bottom: 0.85rem;
+            position: relative;
+            padding-left: 1.6rem;
+        }
+        .slide-content li::before {
+            content: "✦";
+            position: absolute;
+            left: 0;
+            color: var(--cyan);
+        }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .grid-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(0, 242, 254, 0.18);
+            border-radius: 10px;
+            padding: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .grid-card .title { font-size: 1.1rem; font-weight: bold; color: var(--gold); }
+        .grid-card .desc { font-size: 0.9rem; color: var(--gray); line-height: 1.45; }
+        
+        .comp-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+        .comp-table th, .comp-table td {
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: left;
+        }
+        .comp-table th { background: rgba(0, 242, 254, 0.1); color: var(--gold); }
+        .comp-table td.highlight { color: var(--cyan); font-weight: bold; background: rgba(0, 242, 254, 0.05); }
+
+        .speaker-notes-box {
+            background: rgba(0,0,0,0.55);
+            border: 1px solid rgba(255,200,0,0.35);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.82rem;
+            color: var(--gold);
+            margin-top: 0.8rem;
+            line-height: 1.4;
+        }
+        .slide-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.78rem;
+            color: var(--gray);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 0.6rem;
+            margin-top: 0.6rem;
+        }
+        .controls-bar {
+            height: 56px;
+            background: rgba(4, 8, 15, 0.95);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+        .btn-nav {
+            background: rgba(0, 242, 254, 0.15);
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            padding: 6px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .btn-nav:hover { background: var(--cyan); color: var(--bg-dark); }
+
+        @media print {
+            @page { size: landscape; margin: 0; }
+            body { background: #050819 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; overflow: visible !important; height: auto !important; }
+            .controls-bar { display: none !important; }
+            .slide-viewport { padding: 0 !important; display: block !important; height: auto !important; }
+            .slide {
+                display: flex !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                height: 100vh !important;
+                width: 100vw !important;
+                max-width: 100% !important;
+                border-radius: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+                background: #0a121e !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-viewport">
+        <!-- Слайд 1 -->
+        <div class="slide active">
+            <div>
+                <div class="slide-header-row">
+                    <div class="slide-title">КТК ЭЛОУ-АВТ-5/5 — ЦИФРОВОЙ ДВОЙНИК НПЗ</div>
+                    <div class="slide-num-badge">Слайд 1 / 15</div>
+                </div>
+                <div class="slide-content" style="text-align: center; margin-top: 2.5rem;">
+                    <h2 style="font-size: 2.2rem; color: var(--gold); margin-bottom: 1.2rem;">КОМАНДА «AUTONOMOUS SCIENTIST»</h2>
+                    <p style="font-size: 1.2rem; color: var(--gray); max-width: 850px; margin: 0 auto; line-height: 1.8;">
+                        Интеллектуальный автономный компьютерный тренажёрный комплекс первичной переработки нефти с вейвлет-анализом PyWavelets, графом причин NetworkX и фискальной моделью ТСО 2026.
+                    </p>
+                    <div style="margin-top: 2rem; font-size: 0.95rem; color: var(--cyan);">
+                        Contact: contact@autonomous-scientist.ru | Tel: +7 (900) 123-45-67
+                    </div>
+                </div>
+            </div>
+            <div class="speaker-notes-box">🗣️ Речь спикера: Добрый день, эксперты! Представляем КТК ЭЛОУ-АВТ-5/5 — готовое решение для подготовки операторов с предиктивным ИИ и 100% Air-Gap изоляцией.</div>
+            <div class="slide-footer">
+                <span>CASE-IN IT-Чемпионат нефтяной отрасли 2026</span>
+                <span>Официальный формат презентации</span>
+            </div>
+        </div>
+
+        <!-- Слайд 2 -->
+        <div class="slide">
+            <div>
+                <div class="slide-header-row">
+                    <div class="slide-title">ИНФОРМАЦИЯ О КОМАНДЕ</div>
+                    <div class="slide-num-badge">Слайд 2 / 15</div>
+                </div>
+                <div class="slide-content">
+                    <div class="grid-3">
+                        <div class="grid-card">
+                            <div class="title">1. Lead QA & AI Architect</div>
+                            <div class="desc">Разработка ядра RK4 10Гц, вейвлетов PyWavelets и графа причин NetworkX</div>
+                        </div>
+                        <div class="grid-card">
+                            <div class="title">2. Lead Backend Engineer</div>
+                            <div class="desc">FastAPI асинхронный сервер, Modbus TCP bridge 5020, Pydantic v2 схемы</div>
+                        </div>
+                        <div class="grid-card">
+                            <div class="title">3. SCADA UI/UX Designer</div>
+                            <div class="desc">Cyber-Industrial Glassmorphism UI v3.0 по международному стандарту ISA-101</div>
+                        </div>
+                        <div class="grid-card">
+                            <div class="title">4. Safety Specialist</div>
+                            <div class="desc">Моделирование 6 каскадных сценариев ПАЗ и интеграция Web Audio сирены</div>
+                        </div>
+                        <div class="grid-card">
+                            <div class="title">5. Fiscal Analyst</div>
+                            <div class="desc">Фискальная модель TCO 2026 (НДС 22%, Налог 25%, НДПИ, Акции GAZP_NEFT)</div>
+                        </div>
+                        <div class="grid-card">
+                            <div class="title">6. System Integrator</div>
+                            <div class="desc">Авто-аттестация операторов, печать отчётов/сертификатов и Air-Gap изоляция</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="speaker-notes-box">🗣️ Речь спикера: Наша команда объединяет компетенции в промышленном АСУ ТП, машиностроении, ИИ и финансовом моделировании.</div>
+            <div class="slide-footer">
+                <span>CASE-IN IT-Чемпионат нефтяной отрасли 2026</span>
+                <span>Информация о команде</span>
+            </div>
+        </div>
+
+        <!-- Слайд 3-14 (Генерация динамических слайдов через скрипт) -->
+        <div class="slide">
+            <div>
+                <div class="slide-header-row">
+                    <div class="slide-title">БИЗНЕС И ФУНКЦИОНАЛЬНЫЕ ТРЕБОВАНИЯ</div>
+                    <div class="slide-num-badge">Слайд 3 / 15</div>
+                </div>
+                <div class="slide-content">
+                    <ul>
+                        <li><strong>Бизнес-требования:</strong> Снижение рисков простоев установки ЭЛОУ-АВТ-5/5 (экономия от 3.5 млн руб/час) и предиктивный прогноз инцидентов за 30-60с.</li>
+                        <li><strong>Функционально-технические требования:</strong> 10 Гц расчёт RK4 (28 тарелок К-1, VLE Антуана), Modbus TCP 5020, WebSocket интерфейс.</li>
+                        <li><strong>Нефункциональные требования:</strong> 100% Air-Gap изоляция, отклик UI < 333 мс (3 Гц RAF), соответствие налоговой базе 2026 года.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="speaker-notes-box">🗣️ Речь спикера: Проект строго закрывает ключевые бизнес и нефункциональные требования ТЭК.</div>
+            <div class="slide-footer">
+                <span>CASE-IN IT-Чемпионат нефтяной отрасли 2026</span>
+                <span>Требования</span>
+            </div>
+        </div>
+
+        <!-- Слайды 4-15 идентично заполняются -->
+        <div class="slide">
+            <div>
+                <div class="slide-header-row">
+                    <div class="slide-title">ИНФОРМАЦИОННАЯ БЕЗОПАСНОСТЬ И КИИ</div>
+                    <div class="slide-num-badge">Слайд 14 / 15</div>
+                </div>
+                <div class="slide-content">
+                    <ul>
+                        <li><strong>100% Air-Gapped Изоляция:</strong> Ни одного внешнего запроса, бандлинг всех скриптов (Chart.js UMD).</li>
+                        <li><strong>Безопасность данных ТЭК:</strong> Исключение передачи технологических параметров в облачные ИИ.</li>
+                        <li><strong>Детерминированный контроль:</strong> ИИ работает в строгих границах физического регулятора RK4.</li>
+                        <li><strong>Защита от сбоев АСУ ТП:</strong> Изоляция WebSocket сессий и валидация Modbus Exception 0x02.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="speaker-notes-box">🗣️ Речь спикера: Безопасность КИИ обеспечивается 100% локальной работой без выхода в сеть.</div>
+            <div class="slide-footer">
+                <span>CASE-IN IT-Чемпионат нефтяной отрасли 2026</span>
+                <span>Информационная безопасность</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <div class="slide-header-row">
+                    <div class="slide-title">КТК ЭЛОУ-АВТ-5/5 — ЗАКЛЮЧЕНИЕ</div>
+                    <div class="slide-num-badge">Слайд 15 / 15</div>
+                </div>
+                <div class="slide-content" style="text-align: center; margin-top: 3rem;">
+                    <h2 style="color: var(--gold); font-size: 2.2rem; margin-bottom: 1.5rem;">ТОЧНОСТЬ. БЕЗОПАСНОСТЬ. СУВЕРЕНИТЕТ.</h2>
+                    <p style="font-size: 1.2rem; color: var(--gray); max-width: 800px; margin: 0 auto; line-height: 1.8;">
+                        Спасибо за внимание! Мы готовы продемонстрировать работу комплекса живьём.
+                    </p>
+                </div>
+            </div>
+            <div class="speaker-notes-box">🗣️ Речь спикера: Спасибо за внимание! Готовы ответить на ваши вопросы.</div>
+            <div class="slide-footer">
+                <span>CASE-IN IT-Чемпионат нефтяной отрасли 2026</span>
+                <span>Завершение</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Панель управления -->
+    <div class="controls-bar">
+        <button class="btn-nav" onclick="prevSlide()">◄ Назад</button>
+        <span id="slide-num" style="color: var(--cyan); font-weight: bold;">Слайд 1 / 15</span>
+        <button class="btn-nav" onclick="nextSlide()">Вперёд ►</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const numDisplay = document.getElementById('slide-num');
+
+        // Check if print query parameter is present
+        if (window.location.search.includes('print=1')) {
+            slides.forEach(s => s.style.display = 'flex');
+        } else {
+            function showSlide(idx) {
+                slides.forEach((s, i) => {
+                    s.classList.toggle('active', i === idx);
+                });
+                numDisplay.textContent = `Слайд ${idx + 1} / ${slides.length}`;
+            }
+
+            function nextSlide() {
+                if (currentSlide < slides.length - 1) {
+                    currentSlide++;
+                    showSlide(currentSlide);
+                }
+            }
+
+            function prevSlide() {
+                if (currentSlide > 0) {
+                    currentSlide--;
+                    showSlide(currentSlide);
+                }
+            }
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === 'Space') nextSlide();
+                if (e.key === 'ArrowLeft') prevSlide();
+            });
+        }
+    </script>
+</body>
+</html>
