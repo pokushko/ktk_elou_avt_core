@@ -1,51 +1,44 @@
-// Корпоративный экран Совета Директоров
+// Корпоративный модуль биржевых котировок (ПАО «Газпром нефть» / Мосбиржа)
 let baseStockPrice = 620.00;
-let initialStockPrice = 620.00;
+const INITIAL_STOCK_PRICE = 620.00;
 
 function updateCorporateScreen(state, alarms, interlocks) {
-    const priceEl = document.getElementById('stock-price');
-    const changeEl = document.getElementById('stock-change');
-    const tickerEl = document.getElementById('news-ticker');
+    const priceHdr = document.getElementById('stock-price-hdr');
+    const changeHdr = document.getElementById('stock-change-hdr');
     
-    // Считаем негативные факторы
-    const hasPazTrip = interlocks.some(item => item.is_tripped);
-    const hasActiveAlarms = alarms.length > 0;
-    const hasEmissionViolation = state.furnace.emissions.is_violating;
+    // Считаем технологические факторы риска
+    const hasPazTrip = Array.isArray(interlocks) && interlocks.some(item => item && item.is_tripped);
+    const hasEmergency = Boolean(window.activeEmergencyState);
+    const hasActiveAlarms = Array.isArray(alarms) && alarms.length > 0;
+    const hasEmissionViolation = Boolean(state?.furnace?.emissions?.is_violating);
     
-    let changeRate = 0.05; // Рост на 0.05% по умолчанию (стабильность)
-    let newsText = "Установка АВТ-5/5 работает в штатном режиме. Показатели стабильны.";
+    // Целевой дисконт цены в зависимости от аварийной обстановки на АВТ-5/5
+    let targetChangePct = 0.08; // Нормальный штатный режим: +0.08% (стабильный бизнес)
     
-    if (hasPazTrip) {
-        changeRate = -2.5; // Падение акций при аварии
-        newsText = "ЧП НА НПЗ: Сработала автоматическая система защиты ПАЗ! Проводится аварийный останов оборудования.";
+    if (hasPazTrip || hasEmergency) {
+        targetChangePct = -3.85; // Аварийная остановка / Срыв режима: падение на -3.85%
     } else if (hasEmissionViolation) {
-        changeRate = -1.2; // Штрафы экологов
-        newsText = "ЭКОЛОГИЧЕСКИЙ ИНЦИДЕНТ: Превышение ПДК по выбросам вредных газов печи П-1 в атмосферу!";
+        targetChangePct = -1.25; // Экологический штраф ПДК: падение на -1.25%
     } else if (hasActiveAlarms) {
-        changeRate = -0.3; // Незначительное падение при отклонениях
-        newsText = "ВНИМАНИЕ: На мнемосхеме зафиксировано отклонение рабочих параметров. Оператор устраняет неполадку.";
+        targetChangePct = -0.40; // Нештатное отклонение параметров: легкая просадка -0.40%
     }
     
-    // Рассчитываем случайные рыночные флуктуации
-    const marketFluctuation = (Math.random() - 0.45) * 0.2; // небольшой тренд
+    // Целевая цена с учетом случайного биржевого микрошума (+- 0.05%)
+    const microNoise = (Math.random() - 0.5) * 0.08;
+    const targetPrice = INITIAL_STOCK_PRICE * (1.0 + (targetChangePct + microNoise) / 100.0);
     
-    // Обновляем цену
-    baseStockPrice += (baseStockPrice * (changeRate / 100.0) + marketFluctuation);
-    if (baseStockPrice < 100.0) baseStockPrice = 100.0; // дно акций
+    // Плавное приближение к целевой цене (Mean-Reversion / фильтр первого порядка tau ~ 2 сек)
+    baseStockPrice += (targetPrice - baseStockPrice) * 0.05;
     
-    const pctChange = ((baseStockPrice - initialStockPrice) / initialStockPrice) * 100.0;
+    const pctChange = ((baseStockPrice - INITIAL_STOCK_PRICE) / INITIAL_STOCK_PRICE) * 100.0;
+    const priceStr = `${baseStockPrice.toFixed(2)} RUB`;
+    const changeStr = `${pctChange >= 0 ? '+' : ''}${pctChange.toFixed(2)}%`;
+    const changeClass = pctChange >= 0 ? 'stock-change percent-up' : 'stock-change percent-down';
     
-    priceEl.innerText = `${baseStockPrice.toFixed(2)} RUB`;
-    changeEl.innerText = `${pctChange >= 0 ? '+' : ''}${pctChange.toFixed(2)}%`;
-    
-    if (pctChange >= 0) {
-        changeEl.className = 'stock-change percent-up';
-    } else {
-        changeEl.className = 'stock-change percent-down';
-    }
-    
-    // Обновляем бегущую строку новостей
-    if (tickerEl.innerText !== newsText) {
-        tickerEl.innerText = newsText;
+    // Обновляем виджет в шапке экрана
+    if (priceHdr) priceHdr.innerText = priceStr;
+    if (changeHdr) {
+        changeHdr.innerText = changeStr;
+        changeHdr.className = changeClass;
     }
 }

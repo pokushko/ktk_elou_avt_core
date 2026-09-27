@@ -1,5 +1,5 @@
 // Дополнительные визуальные эффекты и кастомный рендеринг SVG мнемосхемы
-function animateEquipmentStatus(state) {
+function animateEquipmentStatus(state, alarms = []) {
     // Насос Н-1 статус (зеленый при работе, красный при останове)
     const pumpH1 = document.querySelector('circle[cx="50"][cy="150"]');
     if (pumpH1) {
@@ -50,6 +50,44 @@ function animateEquipmentStatus(state) {
         } else {
             flame.style.display = 'none';
         }
+    }
+
+    // --- Обработка визуальных аварийных индикаторов на P&ID ---
+    // Снимаем моргание со всех элементов
+    const allBlinkers = document.querySelectorAll('.svg-alarm-blink');
+    allBlinkers.forEach(el => el.classList.remove('svg-alarm-blink'));
+
+    // Включаем моргание на оборудовании с активными авариями из WebSocket или локального сценария
+    const emType = window.activeEmergencyState ? window.activeEmergencyState.type : null;
+    if (emType) {
+        if (emType === 'overheat') document.querySelector('#svg-furnace-p1')?.classList.add('svg-alarm-blink');
+        if (emType === 'k1_overpressure' || emType === 'gas_leak') document.querySelector('#svg-column-k1')?.classList.add('svg-alarm-blink');
+        if (emType === 'vacuum_drop') document.querySelector('#svg-column-k2')?.classList.add('svg-alarm-blink');
+        if (emType === 'salt_breakthrough') document.querySelector('#svg-elou')?.classList.add('svg-alarm-blink');
+        if (emType === 'vibration_compaks' || emType === 'power_blackout') document.querySelector('#svg-pump-h1')?.classList.add('svg-alarm-blink');
+        if (emType === 'esd_trip') {
+            document.querySelector('#svg-furnace-p1')?.classList.add('svg-alarm-blink');
+            document.querySelector('#svg-column-k1')?.classList.add('svg-alarm-blink');
+            document.querySelector('#svg-column-k2')?.classList.add('svg-alarm-blink');
+            document.querySelector('#svg-elou')?.classList.add('svg-alarm-blink');
+            document.querySelector('#svg-pump-h1')?.classList.add('svg-alarm-blink');
+        }
+    }
+
+    if (alarms && alarms.length > 0) {
+        alarms.forEach(alarm => {
+            let targetEl = null;
+            const eq = alarm.equipment_id || '';
+            if (eq.includes('П-1') || eq.includes('Печь')) targetEl = document.querySelector('#svg-furnace-p1');
+            if (eq.includes('К-1') || eq.includes('Газозащита') || eq.includes('Газ')) targetEl = document.querySelector('#svg-column-k1');
+            if (eq.includes('К-2') || eq.includes('Вакуум')) targetEl = document.querySelector('#svg-column-k2');
+            if (eq.includes('ЭЛОУ') || eq.includes('Э-101')) targetEl = document.querySelector('#svg-elou');
+            if (eq.includes('КОМПАКС') || eq.includes('Н-1') || eq.includes('Энергоснабжение')) targetEl = document.querySelector('#svg-pump-h1');
+
+            if (targetEl) {
+                targetEl.classList.add('svg-alarm-blink');
+            }
+        });
     }
 }
 

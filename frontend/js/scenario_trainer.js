@@ -15,19 +15,19 @@ const ScenarioTrainer = (function () {
     const SCENARIOS = {
         overheat: {
             title: '🔥 ПЕРЕГРЕВ ПЕЧИ П-1 (> 450 °C)',
-            situation: 'Температура на выходе печи П-1 превысила 450°C из-за избытка топливного газа. Угроза прогара змеевиков и взрыва.',
+            situation: 'Температура на выходе печи П-1 превысила 450°C из-за избытка топливного газа (100%). Угроза прогара змеевиков и взрыва.',
             timeLimit: 60,
             steps: [
-                { id: 'lims_check', text: 'Провести экспресс-анализ LIMS по пробе «Бензин» (проверка конца кипения ГОСТ 2177)', check: () => window.limsLastTested === 'gasoline' || (window.limsTestedCount && window.limsTestedCount > 0) },
                 { id: 'fuel_down', text: 'Снизить задвижку топливного газа (П-1) ≤ 30%', check: () => getValveValue('fuel') <= 30 },
-                { id: 'crude_check', text: 'Проверить подачу сырья (Н-1) — не менее 100 м³/ч', check: () => getValveValue('crude') >= 60 },
+                { id: 'lims_check', text: 'Провести экспресс-анализ LIMS по пробе «Бензин» (проверка ГОСТ 2177)', check: () => window.limsTestedProducts && window.limsTestedProducts.includes('gasoline') },
+                { id: 'crude_check', text: 'Убедиться в стабильной подаче сырья (ползунок нефти ≥ 80%)', check: () => getValveValue('crude') >= 80 },
                 { id: 'copilot_ask', text: 'Запросить рекомендацию у ИИ-Наставника (написать в чат)', check: () => checkCopilotUsed() },
             ],
             perfectScore: 100,
             hints: [
+                '💡 Переместите ползунок «Задвижка топливного газа» влево до 20-30%.',
                 '💡 Выполните анализ «Бензин» в панели Экспресс-Лаборатории LIMS.',
-                '💡 Переместите ползунок «Задвижка топливного газа» влево до 25-30%.',
-                '💡 Убедитесь что подача нефти стабильна (ползунок сырья ≥ 60%).',
+                '💡 Убедитесь что подача сырья ≥ 80%.',
                 '💡 Напишите вопрос ИИ-Наставнику внизу страницы.'
             ]
         },
@@ -36,16 +36,16 @@ const ScenarioTrainer = (function () {
             situation: 'Давление в вакуумной колонне К-2 выросло до 0.08 МПа. Кавитация пароэжекторов, унос мазута в дизельную фракцию.',
             timeLimit: 60,
             steps: [
-                { id: 'lims_check', text: 'Провести экспресс-анализ LIMS по пробе «Керосин» или «Мазут» (вязкость/вспышка)', check: () => window.limsLastTested === 'mazut' || window.limsLastTested === 'kerosene' || (window.limsTestedCount && window.limsTestedCount > 0) },
-                { id: 'fuel_reduce', text: 'Уменьшить нагрев — задвижка газа ≤ 50%', check: () => getValveValue('fuel') <= 50 },
-                { id: 'crude_reduce', text: 'Снизить подачу сырья ≤ 70% для разгрузки колонны', check: () => getValveValue('crude') <= 70 },
-                { id: 'copilot_ask', text: 'Сообщить наставнику о ситуации в чат', check: () => checkCopilotUsed() },
+                { id: 'fuel_reduce', text: 'Уменьшить нагрев — задвижка газа (П-1) ≤ 40%', check: () => getValveValue('fuel') <= 40 },
+                { id: 'crude_reduce', text: 'Снизить подачу сырья (Н-1) ≤ 60% для разгрузки вакуумной колонны', check: () => getValveValue('crude') <= 60 },
+                { id: 'lims_check', text: 'Провести экспресс-анализ LIMS по пробе «Мазут» (проверка вязкости/вспышки)', check: () => window.limsTestedProducts && window.limsTestedProducts.includes('mazut') },
+                { id: 'copilot_ask', text: 'Сообщить ИИ-Наставнику о ситуации в чат', check: () => checkCopilotUsed() },
             ],
             perfectScore: 100,
             hints: [
-                '💡 Запросите экспресс-анализ LIMS для «Керосин» или «Мазут».',
-                '💡 Снизьте подачу газа до 40-50% ползунком топливного газа.',
-                '💡 Уменьшите подачу сырья до 60-70% ползунком сырой нефти.',
+                '💡 Снизьте подачу газа до 30-40% ползунком топливного газа.',
+                '💡 Уменьшите подачу сырья до 50-60% ползунком сырой нефти.',
+                '💡 Запросите экспресс-анализ LIMS для «Мазут».',
                 '💡 Напишите ИИ-Наставнику о ситуации.'
             ]
         },
@@ -54,31 +54,31 @@ const ScenarioTrainer = (function () {
             situation: 'Электродегидратор Э-101 потерял эффективность. Солесодержание нефти выросло до 58.4 мг/л. Угроза коррозии шлемовых труб К-1.',
             timeLimit: 60,
             steps: [
-                { id: 'lims_check', text: 'Выполнить экспресс-анализ LIMS по пробе «Обессоленная нефть» (соли/вода)', check: () => window.limsLastTested === 'desalted_oil' || (window.limsTestedCount && window.limsTestedCount > 0) },
-                { id: 'crude_reduce', text: 'Снизить подачу сырья ≤ 50% для стабилизации ЭЛОУ', check: () => getValveValue('crude') <= 50 },
-                { id: 'copilot_ask', text: 'Запросить у ИИ-Наставника порядок восстановления Э-101', check: () => checkCopilotUsed() },
+                { id: 'crude_reduce', text: 'Снизить подачу сырья ≤ 50% для разгрузки и стабилизации ЭЛОУ', check: () => getValveValue('crude') <= 50 },
+                { id: 'lims_check', text: 'Выполнить экспресс-анализ LIMS по пробе «Обессоленная нефть» (соли/вода)', check: () => window.limsTestedProducts && window.limsTestedProducts.includes('desalted_oil') },
+                { id: 'copilot_ask', text: 'Запросить у ИИ-Наставника порядок восстановления Э-101 (написать в чат)', check: () => checkCopilotUsed() },
             ],
             perfectScore: 100,
             hints: [
-                '💡 Нажмите «Обессоленная нефть» в панели Экспресс-Лаборатории LIMS.',
                 '💡 Снизьте ползунок подачи сырья до 40-50%.',
+                '💡 Нажмите кнопку «Обессоленная нефть» в панели Экспресс-Лаборатории LIMS.',
                 '💡 Спросите ИИ-Наставника о порядке восстановления.'
             ]
         },
         vibration_compaks: {
             title: '🔊 АВАРИЯ НАСОСА Н-1А (КОМПАКС)',
-            situation: 'Система КОМПАКС зафиксировала вибрацию 12.8 мм/с на подшипнике насоса Н-1А. Автоматический останов Н-1А, запуск резервного Н-1Б.',
+            situation: 'Система КОМПАКС зафиксировала вибрацию 12.8 мм/с на подшипнике насоса Н-1А. Произошел аварийный останов Н-1А. Требуется подтвердить аварию в КОМПАКС, ввести резерв и восстановить подачу сырья.',
             timeLimit: 45,
             steps: [
-                { id: 'compaks_check', text: 'Проверить статус виброскорости в модуле «КОМПАКС» (ISO 10816-3)', check: () => true },
-                { id: 'crude_check', text: 'Подтвердить стабильность подачи сырья (≥ 80%)', check: () => getValveValue('crude') >= 80 },
-                { id: 'copilot_ask', text: 'Запросить рекомендацию по проверке Н-1Б у ИИ-Наставника', check: () => checkCopilotUsed() },
+                { id: 'compaks_check', text: 'Подтвердить аварию: кликнуть на панель «КОМПАКС» для фиксации виброскорости 12.8 мм/с', check: () => window.compaksInspected === true },
+                { id: 'crude_check', text: 'Восстановить подачу сырья на резервном насосе Н-1Б: ползунок задвижки ≥ 80%', check: () => getValveValue('crude') >= 80 },
+                { id: 'copilot_ask', text: 'Запросить рекомендацию по проверке Н-1Б у ИИ-Наставника (написать в чат)', check: () => checkCopilotUsed() },
             ],
             perfectScore: 100,
             hints: [
-                '💡 Посмотрите на панель вибромониторинга «КОМПАКС».',
-                '💡 Убедитесь что ползунок подачи сырья ≥ 80%.',
-                '💡 Спросите наставника о проверке резервного насоса.'
+                '💡 Кликните мышкой на панель вибромониторинга «КОМПАКС» слева внизу.',
+                '💡 Передвиньте ползунок «Задвижка сырой нефти» вправо до 80-100%.',
+                '💡 Напишите вопрос ИИ-Наставнику в окне чата внизу страницы.'
             ]
         },
         k1_overpressure: {
@@ -86,55 +86,70 @@ const ScenarioTrainer = (function () {
             situation: 'Забивание верха атмосферной колонны. Давление выросло до 0.38 МПа. Угроза подрыва предохранительных клапанов СППК.',
             timeLimit: 60,
             steps: [
-                { id: 'lims_check', text: 'Выполнить экспресс-анализ LIMS по пробе «Бензин» (проверка обводнения рефлюкса)', check: () => window.limsLastTested === 'gasoline' || (window.limsTestedCount && window.limsTestedCount > 0) },
-                { id: 'fuel_down', text: 'Снизить нагрев печи — задвижка газа ≤ 40%', check: () => getValveValue('fuel') <= 40 },
-                { id: 'crude_reduce', text: 'Уменьшить подачу сырья ≤ 60%', check: () => getValveValue('crude') <= 60 },
-                { id: 'copilot_ask', text: 'Запросить ИИ-Наставника о сбросе давления', check: () => checkCopilotUsed() },
+                { id: 'fuel_down', text: 'Снизить нагрев печи — задвижка газа ≤ 35%', check: () => getValveValue('fuel') <= 35 },
+                { id: 'crude_reduce', text: 'Уменьшить подачу сырья ≤ 55% для снижения парообразования', check: () => getValveValue('crude') <= 55 },
+                { id: 'lims_check', text: 'Выполнить экспресс-анализ LIMS по пробе «Бензин» (проверка обводнения)', check: () => window.limsTestedProducts && window.limsTestedProducts.includes('gasoline') },
+                { id: 'copilot_ask', text: 'Запросить ИИ-Наставника о сбросе давления на факел', check: () => checkCopilotUsed() },
             ],
             perfectScore: 100,
-            hints: ['💡 Нажмите «Бензин» в LIMS.', '💡 Снизьте подачу газа и сырья ползунками.', '💡 Спросите наставника.']
+            hints: [
+                '💡 Снизьте подачу газа до 30-35%.',
+                '💡 Уменьшите подачу сырья до 50%.',
+                '💡 Нажмите «Бензин» в панели LIMS.',
+                '💡 Напишите ИИ-Наставнику о сбросе давления.'
+            ]
         },
         gas_leak: {
             title: '⛽ УТЕЧКА И ЗАГАЗОВАННОСТЬ',
             situation: 'Прорыв фланца на К-1. Датчики загазованности сработали. Угроза взрыва парогазового облака.',
             timeLimit: 45,
             steps: [
-                { id: 'lims_check', text: 'Провести экспресс-анализ LIMS по пробе «Сырая нефть» (проверка параметров сырья)', check: () => window.limsLastTested === 'crude_oil' || (window.limsTestedCount && window.limsTestedCount > 0) },
                 { id: 'crude_off', text: 'НЕМЕДЛЕННО отсечь подачу сырья (= 0%)', check: () => getValveValue('crude') <= 5 },
                 { id: 'fuel_off', text: 'НЕМЕДЛЕННО отсечь подачу газа (= 0%)', check: () => getValveValue('fuel') <= 5 },
-                { id: 'copilot_ask', text: 'Сообщить наставнику о загазованности', check: () => checkCopilotUsed() },
+                { id: 'lims_check', text: 'Запросить экспресс-анализ LIMS по пробе «Сырая нефть»', check: () => window.limsTestedProducts && window.limsTestedProducts.includes('crude_oil') },
+                { id: 'copilot_ask', text: 'Сообщить наставнику о загазованности (написать в чат)', check: () => checkCopilotUsed() },
             ],
             perfectScore: 100,
-            hints: ['💡 Нажмите «Сырая нефть» в LIMS.', '💡 КРИТИЧНО! Переведите оба ползунка в 0% немедленно!']
+            hints: [
+                '💡 КРИТИЧНО! Переведите оба ползунка в 0% немедленно!',
+                '💡 Нажмите «Сырая нефть» в LIMS.',
+                '💡 Напишите в чат о загазованности.'
+            ]
         },
         power_blackout: {
             title: '⚡ ПРОСАДКА ЭЛЕКТРОЭНЕРГИИ',
             situation: 'Отказ ГПП, просадка питания 6 кВ. Насосы Н-1А/Б остановлены. Подача сырья прекращена.',
             timeLimit: 60,
             steps: [
-                { id: 'lims_check', text: 'Запросить экспресс-анализ LIMS по пробе «Мазут» (проверка остатка куба)', check: () => window.limsLastTested === 'mazut' || (window.limsTestedCount && window.limsTestedCount > 0) },
-                { id: 'fuel_down', text: 'Снизить газ ≤ 20% (чтобы не перегреть пустую печь)', check: () => getValveValue('fuel') <= 20 },
-                { id: 'copilot_ask', text: 'Запросить наставника о порядке переключения АВР', check: () => checkCopilotUsed() },
+                { id: 'fuel_down', text: 'Снизить газ ≤ 15% (чтобы не перегреть пустую печь П-1)', check: () => getValveValue('fuel') <= 15 },
+                { id: 'lims_check', text: 'Запросить экспресс-анализ LIMS по пробе «Мазут» (контроль куба)', check: () => window.limsTestedProducts && window.limsTestedProducts.includes('mazut') },
+                { id: 'crude_restore', text: 'После ввода АВР поднять задвижку сырья до 50-70%', check: () => getValveValue('crude') >= 50 && getValveValue('crude') <= 75 },
+                { id: 'copilot_ask', text: 'Запросить наставника о порядке переключения АВР (написать в чат)', check: () => checkCopilotUsed() },
             ],
             perfectScore: 100,
-            hints: ['💡 Нажмите «Мазут» в LIMS.', '💡 Снизьте подачу газа, печь нельзя греть без сырья!']
+            hints: [
+                '💡 Снизьте подачу газа до 10-15%, пустую печь греть нельзя!',
+                '💡 Нажмите «Мазут» в LIMS.',
+                '💡 Поднимите сырье до 50-70% после перехода на АВР.',
+                '💡 Напишите наставнику.'
+            ]
         },
         esd_trip: {
             title: '🛡️ ПОЛНЫЙ АВАРИЙНЫЙ ОСТАНОВ ПАЗ (ESD)',
             situation: 'Сработала система противоаварийной защиты. Все затворы автоматически закрыты. Установка в режиме циркуляции.',
             timeLimit: 90,
             steps: [
-                { id: 'verify_zero', text: 'Убедиться что оба ползунка на 0% (защита сработала)', check: () => getValveValue('crude') <= 5 && getValveValue('fuel') <= 5 },
-                { id: 'copilot_ask', text: 'Запросить наставника о порядке вывода из ESD', check: () => checkCopilotUsed() },
-                { id: 'gradual_fuel', text: 'Постепенно восстановить подачу газа до 20-30%', check: () => getValveValue('fuel') >= 20 && getValveValue('fuel') <= 35 },
+                { id: 'copilot_ask', text: 'Запросить наставника о регламенте вывода из ESD (написать в чат)', check: () => checkCopilotUsed() },
+                { id: 'gradual_fuel', text: 'Постепенно подать газ до 20-30% для мягкого прогрева', check: () => getValveValue('fuel') >= 20 && getValveValue('fuel') <= 35 },
                 { id: 'gradual_crude', text: 'Постепенно восстановить подачу сырья до 40-60%', check: () => getValveValue('crude') >= 40 && getValveValue('crude') <= 65 },
+                { id: 'lims_check', text: 'Выполнить контрольный анализ LIMS по пробе «Бензин»', check: () => window.limsTestedProducts && window.limsTestedProducts.includes('gasoline') },
             ],
             perfectScore: 100,
             hints: [
-                '💡 Сначала убедитесь что всё закрыто (0%).',
-                '💡 Спросите наставника.',
+                '💡 Спросите наставника о регламенте пуска.',
                 '💡 Постепенно (!) подайте газ до 20-30%.',
-                '💡 Затем постепенно подайте сырьё до 40-60%.'
+                '💡 Затем постепенно подайте сырьё до 40-60%.',
+                '💡 Проведите анализ «Бензин» в LIMS.'
             ]
         }
     };
@@ -169,6 +184,13 @@ const ScenarioTrainer = (function () {
         if (!scenario) return;
 
         activeScenario = { ...scenario, id: scenarioId };
+        window.activeScenarioId = scenarioId;
+        window.activeEmergencyState = { type: scenarioId, startTime: Date.now() };
+        window.compaksInspected = false;
+        window.limsLastTested = null;
+        window.limsTestedProducts = [];
+        window.limsTestedCount = 0;
+
         startTime = Date.now();
         completedSteps = [];
         copilotUsedFlag = false;
@@ -333,6 +355,9 @@ const ScenarioTrainer = (function () {
                     changed = true;
                     // Звуковой сигнал успеха
                     if (window.playBeep) window.playBeep(1200, 'sine', 0.1);
+                    if (window.OperatorTracker && typeof window.OperatorTracker.logAction === 'function') {
+                        window.OperatorTracker.logAction('SUCCESS_ACTION', `Выполнен шаг: ${step.text}`, { scenario: activeScenario.id, stepId: step.id });
+                    }
                 }
             });
 
@@ -392,6 +417,44 @@ const ScenarioTrainer = (function () {
             grade = 'ВРЕМЯ ВЫШЛО'; gradeColor = '#e74c3c'; gradeEmoji = '⏰';
         }
 
+        // Сохраняем глобальный результат для выгрузки отчёта аттестации
+        window.lastTrainerResult = {
+            scenarioId: scenario.id,
+            title: scenario.title,
+            score: totalScore,
+            grade: grade,
+            stepsDone: stepsDone,
+            stepsTotal: stepsTotal,
+            elapsedSec: elapsedSec,
+            timeLimit: scenario.timeLimit,
+            isPassed: totalScore >= 60,
+            timestamp: Date.now()
+        };
+
+        // Если авария успешно ликвидирована (или завершена) -> возвращаем технологический режим в норму
+        if (totalScore >= 60 || stepsDone === stepsTotal) {
+            window.activeEmergencyState = null;
+            window.activeScenarioId = null;
+            
+            // Скрываем аварийный оверлей на мнемосхеме
+            const overlay = document.getElementById('mnemo-alarm-overlay');
+            if (overlay) overlay.style.display = 'none';
+            
+            // Восстанавливаем КОМПАКС в штатный зеленый режим
+            window.compaksInspected = true;
+            const vibVal1 = document.getElementById('vib-h1');
+            const vibVal2 = document.getElementById('vib-h2');
+            if (vibVal1) vibVal1.innerHTML = '<span class="vib-label">Н-1А:</span> <span class="vib-val green">3.2 мм/с <small style="opacity:0.6">(Норма | ISO A)</small></span>';
+            if (vibVal2) vibVal2.innerHTML = '<span class="vib-label">Н-2А:</span> <span class="vib-val green">2.8 мм/с <small style="opacity:0.6">(Норма | ISO A)</small></span>';
+            const compaksDiag = document.getElementById('compaks-diag');
+            if (compaksDiag) compaksDiag.innerHTML = '<div style="font-size:10px;"><span style="color:#00f2fe;">Н-1А:</span> <span style="color:#2ecc71;">Подшипник исправен</span></div><div style="font-size:10px;"><span style="color:#a29bfe;">Н-2А:</span> <span style="color:#2ecc71;">Подшипник исправен</span></div>';
+            const compaksMain = document.getElementById('compaks-main-panel');
+            if (compaksMain) {
+                compaksMain.style.borderColor = '#2ecc71';
+                compaksMain.style.boxShadow = 'none';
+            }
+        }
+
         const resultEl = document.getElementById('trainer-result');
         if (resultEl) {
             resultEl.style.display = 'block';
@@ -417,15 +480,20 @@ const ScenarioTrainer = (function () {
                         <div style="font-size: 16px; font-weight: bold; color: #ffd700;">${timeScore} / 40</div>
                     </div>
                 </div>
-                <button onclick="ScenarioTrainer.close()" style="margin-top: 8px; background: linear-gradient(135deg, #ffd700, #ff8c00); border: none; color: #000; padding: 8px 24px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer;">
-                    Закрыть результат
-                </button>
+                <div style="display: flex; gap: 8px; justify-content: center; margin-top: 10px;">
+                    <button onclick="exportDebriefReport()" style="background: rgba(0,242,254,0.15); border: 1px solid #00f2fe; color: #00f2fe; padding: 8px 14px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer;">
+                        📜 Скачать Отчет
+                    </button>
+                    <button onclick="ScenarioTrainer.close()" style="background: linear-gradient(135deg, #ffd700, #ff8c00); border: none; color: #000; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer;">
+                        ✅ Завершить
+                    </button>
+                </div>
             `;
         }
 
         // Записываем в журнал
         if (window.addAlarmEvent) {
-            window.addAlarmEvent("ИНФО", "Тренажёр", `Сценарий "${scenario.title}" завершён. Оценка: ${grade} (${totalScore}/100). Время: ${elapsedSec}с.`);
+            window.addAlarmEvent("ИНФО", "Тренажёр", `Сценарий "${scenario.title}" завершён. Оценка: ${grade} (${totalScore}/100). Авария успешно ликвидирована.`);
         }
 
         activeScenario = null;
@@ -436,6 +504,10 @@ const ScenarioTrainer = (function () {
         if (panelEl) panelEl.remove();
         panelEl = null;
         activeScenario = null;
+        window.activeEmergencyState = null;
+        window.activeScenarioId = null;
+        const overlay = document.getElementById('mnemo-alarm-overlay');
+        if (overlay) overlay.style.display = 'none';
     }
 
     return { startTraining, close, toggleMinimize, SCENARIOS };

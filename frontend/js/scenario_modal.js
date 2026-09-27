@@ -181,9 +181,46 @@ function setValve(id, value) {
 function triggerScenario(type) {
     closeScenarioModal();
     window.activeEmergencyState = { type: type, startTime: Date.now() };
+    window.activeScenarioId = type;
+
+    // Если запущен НЕ сценарий КОМПАКС, сбрасываем вибродиагностику в норму
+    if (type !== 'vibration_compaks') {
+        const vibValH1 = document.querySelector('#vib-h1 .vib-val');
+        if (vibValH1) {
+            vibValH1.className = 'vib-val green';
+            vibValH1.innerHTML = '3.2 мм/с <small style="opacity:0.6">(Норма | ISO A)</small>';
+        }
+        const diagEl = document.getElementById('compaks-diag');
+        if (diagEl) {
+            diagEl.innerHTML = `
+                <div style="display:flex;gap:6px;flex-direction:column;">
+                    <div style="font-size:11px;">
+                        <span style="color:#00f2fe;">Н-1А:</span>
+                        <span style="color:#2ecc71;">Подшипник исправен</span>
+                    </div>
+                    <div style="font-size:11px;">
+                        <span style="color:#a29bfe;">Н-2А:</span>
+                        <span style="color:#2ecc71;">Подшипник исправен</span>
+                    </div>
+                </div>
+            `;
+        }
+        const compaksPanel = document.getElementById('compaks-main-panel');
+        if (compaksPanel) {
+            compaksPanel.style.borderColor = '#2ecc71';
+            compaksPanel.style.boxShadow = 'none';
+        }
+        const ackBtn = document.getElementById('compaks-ack-btn');
+        if (ackBtn) {
+            ackBtn.textContent = '🔍 Квитировать диагностику';
+            ackBtn.style.background = 'rgba(0,242,254,0.1)';
+            ackBtn.style.borderColor = '#00f2fe';
+            ackBtn.style.color = '#00f2fe';
+        }
+    }
 
     if (type === 'overheat') {
-        setValve('fuel', 100);
+        setValve('fuel', 100); // Авария: газ открыт на максимум (100%), требует снижения
         showEmergencyBanner(
             '🔥 КРИТИЧЕСКИЙ ПЕРЕГРЕВ ПЕЧИ П-1 — 452 °C!',
             'Превышение подачи топливного газа. Угроза прогара змеевиков и взрыва. ПАЗ Б-101 АКТИВИРОВАНА.',
@@ -192,10 +229,11 @@ function triggerScenario(type) {
         playEmergencySiren();
         addEmergencyAlarm("КРИТ", "Печь П-1", "🚨 ПРЕВЫШЕНИЕ ТЕМПЕРАТУРЫ ПЕЧИ (452°C)! ВЗРЫВООПАСНОСТЬ!");
         addEmergencyAlarm("ПАЗ", "Блокировка Б-101", "АВТОМАТИЧЕСКАЯ БЛОКИРОВКА ПАЗ: СБРОС ТОПЛИВНОГО ГАЗА!");
-        addEmergencyCopilot("🚨 ИИ-НАСТАВНИК: Критический перегрев печи П-1! Срочно прикройте задвижку топливного газа до 25% и переведите ПАЗ в автоматический режим отсечки!");
+        addEmergencyCopilot("🚨 ИИ-НАСТАВНИК: Критический перегрев печи П-1! Срочно прикройте задвижку топливного газа до 25% и проведите анализ бензина в LIMS!");
 
     } else if (type === 'vacuum_drop') {
-        setValve('fuel', 10);
+        setValve('fuel', 80); // Аварийный перегрев низа
+        setValve('crude', 90);
         showEmergencyBanner(
             '📉 СРЫВ ВАКУУМА В КОЛОННЕ К-2!',
             'Давление К-2 поднялось до 0.08 МПа. Кавитация пароэжекторов. Унос мазута в солярку. ПАЗ Б-102 АКТИВИРОВАНА.',
@@ -204,29 +242,65 @@ function triggerScenario(type) {
         playEmergencySiren();
         addEmergencyAlarm("КРИТ", "Колонна К-2", "🚨 СРЫВ ВАКУУМА! ДАВЛЕНИЕ К-2 ПОДНЯЛОСЬ ДО 0.08 МПа!");
         addEmergencyAlarm("ПАЗ", "Блокировка Б-102", "СРАБАТЫВАНИЕ ЗАЩИТЫ ПО ВАКУУМУ К-2!");
-        addEmergencyCopilot("🚨 ИИ-НАСТАВНИК: Критический срыв вакуума в К-2! Увеличьте подачу пара в пароэжекторы вакуум-создающей системы!");
+        addEmergencyCopilot("🚨 ИИ-НАСТАВНИК: Критический срыв вакуума в К-2! Снизьте нагрев печи (газ ≤ 40%), разгрузите сырье (≤ 60%) и сделайте анализ мазута в LIMS!");
 
     } else if (type === 'salt_breakthrough') {
+        setValve('crude', 90); // Высокий расход сырья провоцирует прорыв солей
         showEmergencyBanner(
             '💧 ПРОРЫВ СОЛЕЙ ПОСЛЕ ЭЛОУ — 58.4 мг/л!',
             'Отказ электродегидратора Э-101. Вынос хлоридов в атмосферную колонну К-1. Угроза коррозии шлемовых труб.',
             '#00c9db'
         );
         addEmergencyAlarm("ТРЕВОГА", "ЭЛОУ-2", "💧 ПРЕВЫШЕНИЕ СОЛЕСОДЕРЖАНИЯ (58.4 мг/л)! УНОС ХЛОРИДОВ!");
-        addEmergencyCopilot("⚠️ ИИ-НАСТАВНИК: Прорыв солей после обессоливания. Проверьте напряжение на электродегидраторах Э-101!");
+        addEmergencyCopilot("⚠️ ИИ-НАСТАВНИК: Прорыв солей после обессоливания. Снизьте подачу сырья ≤ 50% и выполните экспресс-анализ обессоленной нефти в LIMS!");
 
     } else if (type === 'vibration_compaks') {
+        setValve('crude', 0); // Останов насоса Н-1А сбрасывает подачу сырья до 0%
+        window.compaksInspected = false;
+        window.backupPumpStarted = false;
+        window.activeScenarioId = 'vibration_compaks';
+        window.activeEmergencyState = { type: 'vibration_compaks', startTime: Date.now() };
+
+        // Мгновенно обновляем модуль КОМПАКС в интерфейсе SCADA
+        const vibValH1 = document.querySelector('#vib-h1 .vib-val');
+        if (vibValH1) {
+            vibValH1.className = 'vib-val red';
+            vibValH1.innerHTML = '12.8 мм/с <small style="opacity:0.6">(АВАРИЯ | ISO D)</small>';
+        }
+        const diagEl = document.getElementById('compaks-diag');
+        if (diagEl) {
+            diagEl.innerHTML = `
+                <div style="display:flex;gap:6px;flex-direction:column;">
+                    <div style="font-size:11px;">
+                        <span style="color:#00f2fe;">Н-1А:</span>
+                        <span style="color:#ff3838;font-weight:bold;">⛔ РАЗРУШЕНИЕ ПОДШИПНИКА! Немедленная замена!</span>
+                    </div>
+                    <div style="font-size:11px;">
+                        <span style="color:#a29bfe;">Н-2А:</span>
+                        <span style="color:#2ecc71;">Подшипник исправен</span>
+                    </div>
+                </div>
+            `;
+        }
+        const compaksPanel = document.getElementById('compaks-main-panel');
+        if (compaksPanel) {
+            compaksPanel.style.borderColor = '#ff3838';
+            compaksPanel.style.boxShadow = '0 0 18px rgba(255, 56, 56, 0.7)';
+        }
+
         showEmergencyBanner(
             '🔊 АВАРИЯ ПОДШИПНИКА НАСОСА Н-1А — ВИБРАЦИЯ 12.8 мм/с!',
-            'Система КОМПАКС зафиксировала критический уровень вибрации. Автоматическое отключение Н-1А, запуск резервного Н-1Б.',
+            'Система КОМПАКС зафиксировала критический уровень вибрации. Аварийный останов Н-1А! Запустите резервный насос Н-1Б и восстановите подачу сырья.',
             '#9c88ff'
         );
         playEmergencySiren();
         addEmergencyAlarm("КРИТ", "КОМПАКС", "🔊 АВАРИЯ ПОДШИПНИКА НАСОСА Н-1А! Виброскорость 12.8 мм/с > 11.2 мм/с!");
-        addEmergencyAlarm("ПАЗ", "Блокировка Б-104", "АВТОМАТИЧЕСКИЙ ОСТАНОВ НАСОСА Н-1А! ЗАПУСК РЕЗЕРВА Н-1Б.");
-        addEmergencyCopilot("🔊 ИИ-НАСТАВНИК: КОМПАКС зафиксировал вибрацию 12.8 мм/с на Н-1А. Включён резервный насос Н-1Б. Проверьте подшипники!");
+        addEmergencyAlarm("ПАЗ", "Блокировка Б-104", "АВТОМАТИЧЕСКИЙ ОСТАНОВ НАСОСА Н-1А! ТРЕБУЕТСЯ ВВОД РЕЗЕРВА Н-1Б.");
+        addEmergencyCopilot("🔊 ИИ-НАСТАВНИК: КОМПАКС зафиксировал разрушение подшипника на Н-1А (12.8 мм/с). Нажмите на панель КОМПАКС, запустите резерв Н-1Б и откройте задвижку сырья ≥ 80%!");
 
     } else if (type === 'k1_overpressure') {
+        setValve('fuel', 75);
+        setValve('crude', 85);
         showEmergencyBanner(
             '⚠️ ПРЕВЫШЕНИЕ ДАВЛЕНИЯ В КОЛОННЕ К-1 — 0.38 МПа!',
             'Забивание верха атмосферной колонны. Угроза подрыва предохранительных клапанов СППК.',
@@ -234,7 +308,7 @@ function triggerScenario(type) {
         );
         playEmergencySiren();
         addEmergencyAlarm("КРИТ", "Колонна К-1", "⚠️ ПРЕВЫШЕНИЕ ДАВЛЕНИЯ К-1 (0.38 МПа)! Угроза подрыва клапанов СППК!");
-        addEmergencyCopilot("⚠️ ИИ-НАСТАВНИК: Рост давления в К-1! Откройте клапан сброса жирного газа на факел!");
+        addEmergencyCopilot("⚠️ ИИ-НАСТАВНИК: Рост давления в К-1! Снизьте нагрев (газ ≤ 35%), уменьшите подачу сырья (≤ 55%) и проверьте пробу бензина в LIMS!");
 
     } else if (type === 'gas_leak') {
         showEmergencyBanner(
@@ -244,10 +318,10 @@ function triggerScenario(type) {
         );
         playEmergencySiren();
         addEmergencyAlarm("КРИТ", "Газозащита", "⛽ УТЕЧКА БЕНЗИНОВОЙ ФРАКЦИИ! ЗАГАЗОВАННОСТЬ УСТАНОВКИ (ВЗРЫВООПАСНО!)");
-        addEmergencyCopilot("⛽ ИИ-НАСТАВНИК: Датчики загазованности зафиксировали утечку на К-1. Включена лафетная система орошения фланцев!");
+        addEmergencyCopilot("⛽ ИИ-НАСТАВНИК: Датчики загазованности зафиксировали утечку на К-1. Немедленно закройте подачу сырья и газа в 0%!");
 
     } else if (type === 'power_blackout') {
-        setValve('crude', 0);
+        setValve('crude', 0); // Потеря питания останавливает насосы
         showEmergencyBanner(
             '⚡ ПРОСАДКА ЭЛЕКТРОЭНЕРГИИ 6 кВ — ОСТАНОВ НАСОСОВ Н-1А/Б!',
             'Отказ ГПП, питание переключено на АВР. Подача сырья прекращена.',
@@ -255,7 +329,7 @@ function triggerScenario(type) {
         );
         playEmergencySiren();
         addEmergencyAlarm("КРИТ", "Энергоснабжение", "⚡ ПРОСАДКА НАПРЯЖЕНИЯ 6кВ! ОСТАНОВ ОСНОВНЫХ НАСОСОВ СЫРЬЯ Н-1А/Б!");
-        addEmergencyCopilot("⚡ ИИ-НАСТАВНИК: Посадка электроэнергии! АВР перевёл питание на СШ-2. Включите насос циркуляции!");
+        addEmergencyCopilot("⚡ ИИ-НАСТАВНИК: Посадка электроэнергии! Снизьте подачу газа до 15%, сделайте анализ мазута в LIMS и восстановите сырье после АВР!");
 
     } else if (type === 'esd_trip') {
         setValve('crude', 0);
@@ -267,7 +341,7 @@ function triggerScenario(type) {
         );
         playEmergencySiren();
         addEmergencyAlarm("КРИТ", "ПАЗ", "🚨 АВАРИЙНЫЙ ОСТАНОВ УСТАНОВКИ (ESD TRIP)! ВСЕ ЗАТВОРЫ ЗАКРЫТЫ!");
-        addEmergencyCopilot("🛡️ ИИ-НАСТАВНИК: Полный аварийный останов ЭЛОУ-АВТ-5/5 (ESD). Подача сырья и газа отсечена. Переведите SCADA в режим безопасной циркуляции!");
+        addEmergencyCopilot("🛡️ ИИ-НАСТАВНИК: Сработал аварийный останов ESD. Запросите у наставника регламент пуска, плавно подайте газ (20-30%) и затем сырье (40-60%)!");
     }
 
     // Запускаем тренажёр с заданиями и оценкой для оператора

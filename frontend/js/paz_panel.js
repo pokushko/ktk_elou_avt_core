@@ -15,9 +15,10 @@ function updatePAZBoard(interlocks) {
         const badgeClass = isTripped ? 'paz-badge tripped' : 'paz-badge normal';
         const badgeText = isTripped ? 'БЛОКИРОВКА!' : 'НОРМА';
         
+        const descText = item.name || item.description || 'Защита ПАЗ';
         itemDiv.innerHTML = `
             <div>
-                <strong>${item.id}</strong>: ${item.description}
+                <strong>${item.id}</strong>: ${descText}
             </div>
             <span class="${badgeClass}">${badgeText}</span>
         `;

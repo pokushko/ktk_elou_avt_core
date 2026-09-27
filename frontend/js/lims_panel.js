@@ -51,6 +51,12 @@ function runLimsAnalysis(productKey) {
         if (pendingRow) pendingRow.remove();
 
         addLimsRecord(result);
+        
+        // Регистрируем успешное выполнение анализа для тренажера
+        window.limsTestedProducts = window.limsTestedProducts || [];
+        if (!window.limsTestedProducts.includes(productKey)) {
+            window.limsTestedProducts.push(productKey);
+        }
 
         if (!result.is_spec) {
             if (window.playBeep) window.playBeep(400, 'sawtooth', 0.3);

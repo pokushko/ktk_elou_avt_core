@@ -322,25 +322,89 @@ function animateThreeScene() {
 function updateThreeTelemetry(state) {
     if (!isThreeInitialized || !state) return;
 
-    // Цвет насоса H-1 (зелёный = работает, красный = стоп)
+    const emType = window.activeEmergencyState ? window.activeEmergencyState.type : null;
+    const time = performance.now() * 0.005;
+    const pulseFactor = 0.5 + 0.5 * Math.sin(time * 6); // Пульсация аварийной подсветки
+
+    // 1. Насос Н-1 (зелёный = норма/работает, ярко-красный = авария КОМПАКС / останов)
     if (equipment3D['H-1']) {
-        const isRunning = state.pumps && state.pumps[0] && state.pumps[0].is_running;
-        equipment3D['H-1'].head.material.color.setHex(isRunning ? 0x10ac84 : 0xff3838);
-        equipment3D['H-1'].head.material.emissive.setHex(isRunning ? 0x10ac84 : 0xff3838);
+        const isCompaksAlarm = (emType === 'vibration_compaks' && !window.compaksInspected) || 
+                               (emType === 'power_blackout' && (!state.pumps || !state.pumps[0] || !state.pumps[0].is_running));
+        const isRunning = (state.pumps && state.pumps[0] && state.pumps[0].is_running) && !isCompaksAlarm;
+        
+        if (isCompaksAlarm || !isRunning) {
+            equipment3D['H-1'].head.material.color.setHex(0xff0000);
+            equipment3D['H-1'].head.material.emissive.setHex(0xff0000);
+            equipment3D['H-1'].head.material.emissiveIntensity = 0.6 + 0.4 * pulseFactor;
+            equipment3D['H-1'].body.material.emissive.setHex(0xaa0000);
+            equipment3D['H-1'].body.material.emissiveIntensity = 0.4 * pulseFactor;
+        } else {
+            equipment3D['H-1'].head.material.color.setHex(0x10ac84);
+            equipment3D['H-1'].head.material.emissive.setHex(0x10ac84);
+            equipment3D['H-1'].head.material.emissiveIntensity = 0.2;
+            equipment3D['H-1'].body.material.emissive.setHex(0x000000);
+            equipment3D['H-1'].body.material.emissiveIntensity = 0;
+        }
     }
 
-    // Цвет огня печи в зависимости от расхода газа
-    if (equipment3D['P-1'] && state.furnace) {
-        const fuelRatio = state.furnace.fuel_gas_flow / 500.0;
-        equipment3D['P-1'].fire.material.opacity = Math.min(0.9, fuelRatio);
-        equipment3D['P-1'].fireLight.intensity = fuelRatio * 2.5;
-        // При перегреве — красный
-        if (state.furnace.tube_skin_temp > 470) {
-            equipment3D['P-1'].body.material.emissive.setHex(0xff0000);
-            equipment3D['P-1'].body.material.emissiveIntensity = 0.5;
+    // 2. ЭЛОУ (синий = норма, ярко-красный/оранжевый = прорыв солей > 10 мг/л)
+    if (equipment3D['ELOU']) {
+        const isElouAlarm = (state.desalter && state.desalter.outlet_salt_content > 10.0);
+        if (isElouAlarm) {
+            equipment3D['ELOU'].body.material.color.setHex(0xff3838);
+            equipment3D['ELOU'].body.material.emissive.setHex(0xff0055);
+            equipment3D['ELOU'].body.material.emissiveIntensity = 0.6 + 0.4 * pulseFactor;
         } else {
+            equipment3D['ELOU'].body.material.color.setHex(0x34495e);
+            equipment3D['ELOU'].body.material.emissive.setHex(0x000000);
+            equipment3D['ELOU'].body.material.emissiveIntensity = 0;
+        }
+    }
+
+    // 3. Печь П-1 (горение огня + перегрев)
+    if (equipment3D['P-1'] && state.furnace) {
+        const fuelRatio = (state.furnace.fuel_gas_flow || 50) / 500.0;
+        if (equipment3D['P-1'].fire) {
+            equipment3D['P-1'].fire.material.opacity = Math.min(0.95, Math.max(0.2, fuelRatio));
+            equipment3D['P-1'].fireLight.intensity = Math.max(0.5, fuelRatio * 2.8);
+        }
+        const isFurnaceAlarm = (state.furnace.outlet_temperature > 390.0 || state.furnace.tube_skin_temp > 460.0);
+        if (isFurnaceAlarm) {
+            equipment3D['P-1'].body.material.color.setHex(0xff2222);
+            equipment3D['P-1'].body.material.emissive.setHex(0xff0000);
+            equipment3D['P-1'].body.material.emissiveIntensity = 0.6 + 0.4 * pulseFactor;
+        } else {
+            equipment3D['P-1'].body.material.color.setHex(0x4a3728);
             equipment3D['P-1'].body.material.emissive.setHex(0x000000);
             equipment3D['P-1'].body.material.emissiveIntensity = 0;
+        }
+    }
+
+    // 4. Атмосферная колонна К-1 (синий = норма, ярко-красный = превышение давления > 0.18 МПа или T > 135°C)
+    if (equipment3D['K-1']) {
+        const isK1Alarm = state.atm_column && (state.atm_column.top_pressure > 0.18 || state.atm_column.top_temperature > 135.0);
+        if (isK1Alarm) {
+            equipment3D['K-1'].body.material.color.setHex(0xff3838);
+            equipment3D['K-1'].body.material.emissive.setHex(0xff0000);
+            equipment3D['K-1'].body.material.emissiveIntensity = 0.7 + 0.3 * pulseFactor;
+        } else {
+            equipment3D['K-1'].body.material.color.setHex(0x243b55);
+            equipment3D['K-1'].body.material.emissive.setHex(0x000000);
+            equipment3D['K-1'].body.material.emissiveIntensity = 0;
+        }
+    }
+
+    // 5. Вакуумная колонна К-2 (фиолетовый = норма, ярко-оранжевый/красный = срыв вакуума > 0.035 МПа)
+    if (equipment3D['K-2']) {
+        const isK2Alarm = state.vac_column && (state.vac_column.top_pressure > 0.035);
+        if (isK2Alarm) {
+            equipment3D['K-2'].body.material.color.setHex(0xff6b6b);
+            equipment3D['K-2'].body.material.emissive.setHex(0xff5500);
+            equipment3D['K-2'].body.material.emissiveIntensity = 0.7 + 0.3 * pulseFactor;
+        } else {
+            equipment3D['K-2'].body.material.color.setHex(0x2c1f5e);
+            equipment3D['K-2'].body.material.emissive.setHex(0x000000);
+            equipment3D['K-2'].body.material.emissiveIntensity = 0;
         }
     }
 }

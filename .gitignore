@@ -7,3 +7,27 @@ __pycache__/
 .idea/
 *.log
 .DS_Store
+
+# Ignore presentations, documents, and heavy images
+*.pdf
+*.pptx
+*.docx
+*.doc
+*.png
+*.html
+
+# Ignore generation scripts and assets
+FINAL_PACKAGE_CASE_IN/
+extracted_pdf_imgs/
+pdf_slide_renders/
+presentation_assets/
+отправлено/
+build_*.py
+generate_*.py
+fill_*.py
+prepare_*.py
+play_compaks_voice.py
+organize_ktk_files.py
+_read_template_pptx.py
+_scan_pdfs.py
+_audit_test.py

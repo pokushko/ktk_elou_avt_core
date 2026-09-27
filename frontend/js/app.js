@@ -1,7 +1,30 @@
 // Основной файл SCADA системы
-let latestState = null;
+const DEFAULT_SIM_STATE = {
+    sim: {
+        crude_feed: { flow_rate: 150.0, valve_percent: 85.0 },
+        furnace: { outlet_temperature: 360.0, fuel_gas_flow: 50.0, valve_percent: 75.0, emissions: { is_violating: false } },
+        desalter: { outlet_salt_content: 3.2, stage1_voltage: 24.0, stage2_voltage: 22.0 },
+        atm_column: { top_temperature: 120.0, bottom_temperature: 340.0, top_pressure: 0.120 },
+        vac_column: { top_pressure: 0.020, bottom_temperature: 390.0 },
+        pumps: [
+            { id: 'H-1A', is_running: true, vibration_velocity: 3.2 },
+            { id: 'H-2A', is_running: true, vibration_velocity: 2.8 },
+            { id: 'H-3A', is_running: true, vibration_velocity: 2.5 }
+        ],
+        interlocks: [
+            { id: 'Б-101', name: 'Отсечка газа П-1', is_tripped: false },
+            { id: 'Б-102', name: 'Защита вакуума К-2', is_tripped: false },
+            { id: 'Б-103', name: 'Защита давления К-1', is_tripped: false },
+            { id: 'Б-104', name: 'Аварийный останов Н-1А', is_tripped: false }
+        ],
+        lab_analysis: []
+    },
+    alarms: []
+};
+
+let latestState = JSON.parse(JSON.stringify(DEFAULT_SIM_STATE));
 let lastRenderTime = 0;
-const RENDER_THROTTLE_MS = 333; // ~3 Гц обновления UI
+const RENDER_THROTTLE_MS = 200; // 5 Гц динамического обновления UI
 
 // Настройка графиков Chart.js
 const ctx = document.getElementById('telemetryChart').getContext('2d');
@@ -439,95 +462,172 @@ function updateSCADA(payload) {
     }
 
     // Динамическая симуляция аварийных физических параметров в реальном времени
+    const furnSvg = document.getElementById('svg-furnace-p1');
+    const k1Svg = document.getElementById('svg-column-k1') || document.querySelector('rect[x="530"][y="80"]');
+    const k2Svg = document.getElementById('svg-column-k2') || document.querySelector('rect[x="750"][y="60"]');
+    const elouSvg = document.getElementById('svg-elou') || document.querySelector('rect[x="250"][y="100"]');
+    const pumpSvg = document.getElementById('svg-pump-h1');
+
+    const kpiCrudeCard = document.getElementById('kpi-crude');
+    const kpiFurnCard = document.getElementById('kpi-furnace');
+    const kpiK1Card = document.getElementById('kpi-k1');
+    const kpiK2Card = document.getElementById('kpi-k2');
+
     if (window.activeEmergencyState) {
         const em = window.activeEmergencyState;
         const fuelVal = parseFloat(document.getElementById('fuel-gas-slider')?.value || 50);
         const crudeVal = parseFloat(document.getElementById('crude-feed-slider')?.value || 100);
 
         if (em.type === 'overheat') {
-            const targetT = fuelVal > 30 ? 452.0 : 360.0;
-            state.furnace.outlet_temperature += (targetT - state.furnace.outlet_temperature) * 0.3;
+            const isResolved = fuelVal <= 30;
+            const targetT = isResolved ? 360.0 : 452.0;
+            state.furnace.outlet_temperature += (targetT - state.furnace.outlet_temperature) * 0.35;
             state.furnace.fuel_gas_flow = fuelVal * 2.0;
 
-            const furnSvg = document.getElementById('svg-furnace-p1');
-            const kpiFurnCard = document.getElementById('kpi-furnace');
-            if (state.furnace.outlet_temperature > 400) {
-                if (furnSvg) { furnSvg.setAttribute('fill', '#ff2222'); furnSvg.setAttribute('stroke', '#ff0000'); furnSvg.style.filter = 'drop-shadow(0 0 14px #ff0000)'; }
+            if (state.furnace.outlet_temperature > 390) {
+                if (furnSvg) { furnSvg.setAttribute('fill', '#ff2222'); furnSvg.setAttribute('stroke', '#ff0000'); furnSvg.style.filter = 'drop-shadow(0 0 16px #ff0000)'; furnSvg.classList.add('svg-alarm-blink'); }
                 if (kpiFurnCard) kpiFurnCard.className = 'kpi-card alarm';
             } else {
-                if (furnSvg) { furnSvg.setAttribute('fill', 'url(#furnace-grad)'); furnSvg.setAttribute('stroke', '#ff4c4c'); furnSvg.style.filter = 'none'; }
+                if (furnSvg) { furnSvg.setAttribute('fill', 'url(#furnace-grad)'); furnSvg.setAttribute('stroke', '#f39c12'); furnSvg.style.filter = 'none'; furnSvg.classList.remove('svg-alarm-blink'); }
                 if (kpiFurnCard) kpiFurnCard.className = 'kpi-card ok';
             }
         }
         else if (em.type === 'vacuum_drop') {
-            const targetP = (fuelVal > 50 || crudeVal > 70) ? 0.080 : 0.020;
-            state.vac_column.top_pressure += (targetP - state.vac_column.top_pressure) * 0.3;
+            const isResolved = (fuelVal <= 40 && crudeVal <= 60);
+            const targetP = isResolved ? 0.020 : 0.080;
+            state.vac_column.top_pressure += (targetP - state.vac_column.top_pressure) * 0.35;
 
-            const k2Svg = document.querySelector('rect[x="750"][y="60"]');
-            const kpiK2Card = document.getElementById('kpi-k2');
-            if (state.vac_column.top_pressure > 0.045) {
-                if (k2Svg) { k2Svg.setAttribute('stroke', '#ff3838'); k2Svg.style.filter = 'drop-shadow(0 0 14px #ff0000)'; }
+            if (state.vac_column.top_pressure > 0.035) {
+                if (k2Svg) { k2Svg.setAttribute('stroke', '#ff3838'); k2Svg.setAttribute('fill', 'rgba(255,0,0,0.3)'); k2Svg.style.filter = 'drop-shadow(0 0 16px #ff0000)'; k2Svg.classList.add('svg-alarm-blink'); }
                 if (kpiK2Card) kpiK2Card.className = 'kpi-card alarm';
             } else {
-                if (k2Svg) { k2Svg.setAttribute('stroke', '#a29bfe'); k2Svg.style.filter = 'none'; }
+                if (k2Svg) { k2Svg.setAttribute('stroke', '#a29bfe'); k2Svg.setAttribute('fill', 'url(#column-grad)'); k2Svg.style.filter = 'none'; k2Svg.classList.remove('svg-alarm-blink'); }
                 if (kpiK2Card) kpiK2Card.className = 'kpi-card ok';
             }
         }
         else if (em.type === 'salt_breakthrough') {
-            const targetSalt = crudeVal > 50 ? 58.4 : 3.2;
-            state.desalter.outlet_salt_content += (targetSalt - state.desalter.outlet_salt_content) * 0.3;
+            const isResolved = crudeVal <= 50;
+            const targetSalt = isResolved ? 3.2 : 58.4;
+            state.desalter.outlet_salt_content += (targetSalt - state.desalter.outlet_salt_content) * 0.35;
 
-            const elouSvg = document.querySelector('rect[x="250"][y="100"]');
-            if (state.desalter.outlet_salt_content > 20) {
-                if (elouSvg) { elouSvg.setAttribute('stroke', '#ff0000'); elouSvg.style.filter = 'drop-shadow(0 0 14px #ff0000)'; }
+            if (state.desalter.outlet_salt_content > 10) {
+                if (elouSvg) { elouSvg.setAttribute('stroke', '#ff0000'); elouSvg.setAttribute('fill', 'rgba(255,0,0,0.3)'); elouSvg.style.filter = 'drop-shadow(0 0 16px #ff0000)'; elouSvg.classList.add('svg-alarm-blink'); }
             } else {
-                if (elouSvg) { elouSvg.setAttribute('stroke', '#45a29e'); elouSvg.style.filter = 'none'; }
+                if (elouSvg) { elouSvg.setAttribute('stroke', '#45a29e'); elouSvg.setAttribute('fill', 'url(#desalter-grad)'); elouSvg.style.filter = 'none'; elouSvg.classList.remove('svg-alarm-blink'); }
             }
         }
         else if (em.type === 'vibration_compaks') {
-            const pumpSvg = document.getElementById('svg-pump-h1');
-            if (pumpSvg) { pumpSvg.setAttribute('fill', '#ff0000'); pumpSvg.setAttribute('stroke', '#ffffff'); pumpSvg.style.filter = 'drop-shadow(0 0 12px #ff0000)'; }
+            const isResolved = (window.compaksInspected && crudeVal >= 60);
+            if (!isResolved) {
+                if (pumpSvg) { pumpSvg.setAttribute('fill', '#ff0000'); pumpSvg.setAttribute('stroke', '#ffffff'); pumpSvg.style.filter = 'drop-shadow(0 0 16px #ff0000)'; pumpSvg.classList.add('svg-alarm-blink'); }
+                if (kpiCrudeCard) kpiCrudeCard.className = 'kpi-card alarm';
+            } else {
+                if (pumpSvg) { pumpSvg.setAttribute('fill', '#1e272e'); pumpSvg.setAttribute('stroke', '#66fcf1'); pumpSvg.style.filter = 'none'; pumpSvg.classList.remove('svg-alarm-blink'); }
+                if (kpiCrudeCard) kpiCrudeCard.className = 'kpi-card ok';
+            }
         }
         else if (em.type === 'k1_overpressure') {
-            const targetT = fuelVal > 40 ? 175.0 : 120.0;
-            state.atm_column.top_temperature += (targetT - state.atm_column.top_temperature) * 0.3;
+            const isResolved = (fuelVal <= 30 && crudeVal <= 50);
+            const targetT = isResolved ? 120.0 : 175.0;
+            const targetP = isResolved ? 0.120 : 0.380;
+            state.atm_column.top_temperature += (targetT - state.atm_column.top_temperature) * 0.35;
+            state.atm_column.top_pressure = (state.atm_column.top_pressure || 0.120) + (targetP - (state.atm_column.top_pressure || 0.120)) * 0.35;
 
-            const k1Svg = document.querySelector('rect[x="530"][y="80"]');
-            const kpiK1Card = document.getElementById('kpi-k1');
-            if (state.atm_column.top_temperature > 145) {
-                if (k1Svg) { k1Svg.setAttribute('stroke', '#ff0000'); k1Svg.style.filter = 'drop-shadow(0 0 14px #ff0000)'; }
+            if (state.atm_column.top_pressure > 0.18 || state.atm_column.top_temperature > 135) {
+                if (k1Svg) { k1Svg.setAttribute('stroke', '#ff0000'); k1Svg.setAttribute('fill', 'rgba(255,0,0,0.35)'); k1Svg.style.filter = 'drop-shadow(0 0 18px #ff0000)'; k1Svg.classList.add('svg-alarm-blink'); }
                 if (kpiK1Card) kpiK1Card.className = 'kpi-card alarm';
             } else {
-                if (k1Svg) { k1Svg.setAttribute('stroke', '#66fcf1'); k1Svg.style.filter = 'none'; }
+                if (k1Svg) { k1Svg.setAttribute('stroke', '#66fcf1'); k1Svg.setAttribute('fill', 'url(#column-grad)'); k1Svg.style.filter = 'none'; k1Svg.classList.remove('svg-alarm-blink'); }
                 if (kpiK1Card) kpiK1Card.className = 'kpi-card ok';
             }
         }
         else if (em.type === 'gas_leak') {
-            const k1Svg = document.querySelector('rect[x="530"][y="80"]');
-            if (crudeVal > 5 || fuelVal > 5) {
-                if (k1Svg) { k1Svg.setAttribute('stroke', '#ff4d4d'); k1Svg.style.filter = 'drop-shadow(0 0 15px #ff0000)'; }
+            const isResolved = (crudeVal <= 5 && fuelVal <= 5);
+            if (!isResolved) {
+                if (k1Svg) { k1Svg.setAttribute('stroke', '#ff4d4d'); k1Svg.setAttribute('fill', 'rgba(255,56,56,0.35)'); k1Svg.style.filter = 'drop-shadow(0 0 18px #ff0000)'; k1Svg.classList.add('svg-alarm-blink'); }
+                if (kpiK1Card) kpiK1Card.className = 'kpi-card alarm';
             } else {
-                if (k1Svg) { k1Svg.setAttribute('stroke', '#66fcf1'); k1Svg.style.filter = 'none'; }
+                if (k1Svg) { k1Svg.setAttribute('stroke', '#66fcf1'); k1Svg.setAttribute('fill', 'url(#column-grad)'); k1Svg.style.filter = 'none'; k1Svg.classList.remove('svg-alarm-blink'); }
+                if (kpiK1Card) kpiK1Card.className = 'kpi-card ok';
             }
         }
         else if (em.type === 'power_blackout') {
-            state.crude_feed.flow_rate += (0.0 - state.crude_feed.flow_rate) * 0.4;
-            const kpiCrudeCard = document.getElementById('kpi-crude');
-            if (kpiCrudeCard) kpiCrudeCard.className = 'kpi-card alarm';
+            const isRecovered = (crudeVal >= 50 && fuelVal >= 25);
+            if (!isRecovered) {
+                state.crude_feed.flow_rate += (0.0 - state.crude_feed.flow_rate) * 0.4;
+                if (kpiCrudeCard) kpiCrudeCard.className = 'kpi-card alarm';
+                if (pumpSvg) { pumpSvg.setAttribute('fill', '#ff0000'); pumpSvg.setAttribute('stroke', '#ffffff'); pumpSvg.classList.add('svg-alarm-blink'); }
+            } else {
+                state.crude_feed.flow_rate += (150.0 - state.crude_feed.flow_rate) * 0.3;
+                if (kpiCrudeCard) kpiCrudeCard.className = 'kpi-card ok';
+                if (pumpSvg) { pumpSvg.setAttribute('fill', '#1e272e'); pumpSvg.setAttribute('stroke', '#66fcf1'); pumpSvg.classList.remove('svg-alarm-blink'); }
+            }
         }
         else if (em.type === 'esd_trip') {
             const isZero = (crudeVal <= 5 && fuelVal <= 5);
             const targetT = isZero ? 150.0 : 360.0;
             state.furnace.outlet_temperature += (targetT - state.furnace.outlet_temperature) * 0.2;
             state.crude_feed.flow_rate += ((isZero ? 0.0 : 150.0) - state.crude_feed.flow_rate) * 0.3;
+            if (isZero) {
+                if (kpiFurnCard) kpiFurnCard.className = 'kpi-card ok';
+                if (kpiCrudeCard) kpiCrudeCard.className = 'kpi-card ok';
+                if (furnSvg) furnSvg.classList.remove('svg-alarm-blink');
+                if (k1Svg) k1Svg.classList.remove('svg-alarm-blink');
+                if (k2Svg) k2Svg.classList.remove('svg-alarm-blink');
+                if (elouSvg) elouSvg.classList.remove('svg-alarm-blink');
+                if (pumpSvg) pumpSvg.classList.remove('svg-alarm-blink');
+            } else {
+                if (kpiFurnCard) kpiFurnCard.className = 'kpi-card alarm';
+                if (kpiCrudeCard) kpiCrudeCard.className = 'kpi-card alarm';
+                if (furnSvg) furnSvg.classList.add('svg-alarm-blink');
+                if (k1Svg) k1Svg.classList.add('svg-alarm-blink');
+                if (k2Svg) k2Svg.classList.add('svg-alarm-blink');
+                if (elouSvg) elouSvg.classList.add('svg-alarm-blink');
+                if (pumpSvg) pumpSvg.classList.add('svg-alarm-blink');
+            }
         }
+    } else {
+        // Нормальный технологический регламентный режим
+        if (state && state.furnace) {
+            state.furnace.outlet_temperature += (360.0 - state.furnace.outlet_temperature) * 0.25;
+            state.furnace.fuel_gas_flow = 50.0;
+        }
+        if (state && state.crude_feed) {
+            state.crude_feed.flow_rate += (150.0 - state.crude_feed.flow_rate) * 0.25;
+        }
+        if (state && state.vac_column) {
+            state.vac_column.top_pressure += (0.020 - state.vac_column.top_pressure) * 0.25;
+        }
+        if (state && state.atm_column) {
+            state.atm_column.top_temperature += (120.0 - state.atm_column.top_temperature) * 0.25;
+            state.atm_column.top_pressure = 0.12;
+        }
+        if (state && state.desalter) {
+            state.desalter.outlet_salt_content += (3.1 - state.desalter.outlet_salt_content) * 0.25;
+        }
+
+        if (furnSvg) { furnSvg.setAttribute('fill', 'url(#furnace-grad)'); furnSvg.setAttribute('stroke', '#f39c12'); furnSvg.style.filter = 'none'; furnSvg.classList.remove('svg-alarm-blink'); }
+        if (k1Svg) { k1Svg.setAttribute('stroke', '#66fcf1'); k1Svg.setAttribute('fill', 'url(#column-grad)'); k1Svg.style.filter = 'none'; k1Svg.classList.remove('svg-alarm-blink'); }
+        if (k2Svg) { k2Svg.setAttribute('stroke', '#a29bfe'); k2Svg.setAttribute('fill', 'url(#column-grad)'); k2Svg.style.filter = 'none'; k2Svg.classList.remove('svg-alarm-blink'); }
+        if (elouSvg) { elouSvg.setAttribute('stroke', '#45a29e'); elouSvg.setAttribute('fill', 'url(#desalter-grad)'); elouSvg.style.filter = 'none'; elouSvg.classList.remove('svg-alarm-blink'); }
+        if (pumpSvg) { pumpSvg.setAttribute('fill', '#1e272e'); pumpSvg.setAttribute('stroke', '#66fcf1'); pumpSvg.style.filter = 'none'; pumpSvg.classList.remove('svg-alarm-blink'); }
+
+        if (kpiCrudeCard) kpiCrudeCard.className = 'kpi-card ok';
+        if (kpiFurnCard) kpiFurnCard.className = 'kpi-card ok';
+        if (kpiK1Card) kpiK1Card.className = 'kpi-card ok';
+        if (kpiK2Card) kpiK2Card.className = 'kpi-card ok';
     }
 
     // 1. Анимации и тексты SVG мнемосхемы
     document.getElementById('svg-elou-salt').textContent = `Соли: ${state.desalter.outlet_salt_content.toFixed(1)} мг/л`;
     document.getElementById('svg-elou-volt').textContent = `U1: ${state.desalter.stage1_voltage.toFixed(0)} кВ | U2: ${state.desalter.stage2_voltage.toFixed(0)} кВ`;
     document.getElementById('svg-furnace-temp').textContent = `${state.furnace.outlet_temperature.toFixed(0)} °C`;
-    document.getElementById('svg-k1-top').textContent = `Т: ${state.atm_column.top_temperature.toFixed(0)} °C`;
+    
+    // Динамический вывод К-1 (давление + температура)
+    const k1PressVal = state.atm_column.top_pressure ? state.atm_column.top_pressure.toFixed(2) : '0.12';
+    document.getElementById('svg-k1-top').textContent = (window.activeEmergencyState?.type === 'k1_overpressure' && (state.atm_column.top_pressure > 0.20 || state.atm_column.top_temperature > 140))
+        ? `⚠️ P: ${k1PressVal} МПа` 
+        : `Т: ${state.atm_column.top_temperature.toFixed(0)} °C`;
     document.getElementById('svg-k1-bot').textContent = `Т: ${state.atm_column.bottom_temperature.toFixed(0)} °C`;
     document.getElementById('svg-k2-press').textContent = `Р: ${state.vac_column.top_pressure.toFixed(3)} МПа`;
     document.getElementById('svg-k2-bot').textContent = `Т: ${state.vac_column.bottom_temperature.toFixed(0)} °C`;
@@ -537,9 +637,23 @@ function updateSCADA(payload) {
     const kpiFurnace = document.getElementById('val-kpi-furnace');
     const kpiK1 = document.getElementById('val-kpi-k1');
     const kpiK2 = document.getElementById('val-kpi-k2');
+    const kpiK1Label = document.querySelector('#kpi-k1 .kpi-label');
+    const kpiK1Unit = document.querySelector('#kpi-k1 .kpi-unit');
+
     if (kpiFeed) kpiFeed.textContent = state.crude_feed.flow_rate.toFixed(1);
     if (kpiFurnace) kpiFurnace.textContent = state.furnace.outlet_temperature.toFixed(1);
-    if (kpiK1) kpiK1.textContent = state.atm_column.top_temperature.toFixed(1);
+    
+    if (kpiK1) {
+        if (window.activeEmergencyState?.type === 'k1_overpressure') {
+            if (kpiK1Label) kpiK1Label.textContent = 'К-1 Давление';
+            kpiK1.textContent = state.atm_column.top_pressure ? state.atm_column.top_pressure.toFixed(3) : '0.380';
+            if (kpiK1Unit) kpiK1Unit.textContent = 'МПа';
+        } else {
+            if (kpiK1Label) kpiK1Label.textContent = 'К-1 Верх Т';
+            kpiK1.textContent = state.atm_column.top_temperature.toFixed(1);
+            if (kpiK1Unit) kpiK1Unit.textContent = '°C';
+        }
+    }
     if (kpiK2) kpiK2.textContent = state.vac_column.top_pressure.toFixed(3);
     
     // Включение/выключение пламени и дыма
@@ -561,13 +675,38 @@ function updateSCADA(payload) {
     toggleFlowLine('flow-hot', state.pumps[1].is_running);
     toggleFlowLine('flow-vac', state.pumps[2].is_running);
 
-    // 2. Обновление подпанелей
-    if (typeof updatePAZBoard === 'function') updatePAZBoard(state.interlocks);
-    if (typeof updateCorporateScreen === 'function') updateCorporateScreen(state, payload.alarms, state.interlocks);
-    if (typeof updateCompaksPanel === 'function') updateCompaksPanel(state, payload.alarms);
-    if (typeof updateLimsTable === 'function') updateLimsTable(state.lab_analysis);
-    if (typeof animateEquipmentStatus === 'function') animateEquipmentStatus(state);
-    if (typeof updateThreeTelemetry === 'function') updateThreeTelemetry(state);
+    // 2. Динамическое обновление состояния блокировок ПАЗ (Система противоаварийной защиты)
+    if (state && state.interlocks) {
+        const emType = window.activeEmergencyState ? window.activeEmergencyState.type : null;
+        const crudeVal = parseFloat(document.getElementById('crude-feed-slider')?.value || 100);
+        const fuelVal = parseFloat(document.getElementById('fuel-gas-slider')?.value || 50);
+
+        state.interlocks.forEach(item => {
+            if (item.id === 'Б-101') {
+                // Отсечка газа П-1: срабатывает при перегреве печи > 390°C или ESD / загазованности
+                item.is_tripped = (emType === 'overheat' && state.furnace.outlet_temperature > 390) || 
+                                  (emType === 'esd_trip' && fuelVal > 5) || 
+                                  (emType === 'gas_leak' && fuelVal > 5);
+            } else if (item.id === 'Б-102') {
+                // Защита вакуума К-2: срабатывает при срыве вакуума > 0.035 МПа
+                item.is_tripped = (emType === 'vacuum_drop' && state.vac_column.top_pressure > 0.035);
+            } else if (item.id === 'Б-103') {
+                // Защита давления К-1: срабатывает при превышении давления К-1
+                item.is_tripped = (emType === 'k1_overpressure' && (state.atm_column.top_pressure > 0.18 || state.atm_column.top_temperature > 135));
+            } else if (item.id === 'Б-104') {
+                // Аварийный останов Н-1А: срабатывает при разрушении подшипника КОМПАКС или блэкауте
+                item.is_tripped = (emType === 'vibration_compaks' && !window.compaksInspected) || 
+                                  (emType === 'power_blackout' && crudeVal < 40);
+            }
+        });
+    }
+
+    try { if (typeof updatePAZBoard === 'function') updatePAZBoard(state.interlocks || []); } catch(e) {}
+    try { if (typeof updateCorporateScreen === 'function') updateCorporateScreen(state, payload.alarms || [], state.interlocks || []); } catch(e) {}
+    try { if (typeof updateCompaksPanel === 'function') updateCompaksPanel(state, payload.alarms || []); } catch(e) {}
+    try { if (typeof updateLimsTable === 'function') updateLimsTable(state.lab_analysis || []); } catch(e) {}
+    try { if (typeof animateEquipmentStatus === 'function') animateEquipmentStatus(state, payload.alarms || []); } catch(e) {}
+    try { if (typeof updateThreeTelemetry === 'function') updateThreeTelemetry(state); } catch(e) {}
     
     // Обновление ИИ-трекинга оператора
     if (window.OperatorTracker) {

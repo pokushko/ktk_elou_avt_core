@@ -21,14 +21,44 @@ function initCompaksSpectrum() {
         vibSpectrumCanvas.width = vibSpectrumCanvas.offsetWidth;
         vibSpectrumCanvas.height = vibSpectrumCanvas.offsetHeight;
     }
+
+    const compaksPanel = document.querySelector('.compaks-panel');
+    const ackBtn = document.getElementById('compaks-ack-btn');
+
+    function acknowledgeCompaks() {
+        window.compaksInspected = true;
+        if (window.playBeep) window.playBeep(1200, 'sine', 0.15);
+        if (ackBtn) {
+            ackBtn.style.background = 'rgba(46, 204, 113, 0.3)';
+            ackBtn.style.borderColor = '#2ecc71';
+            ackBtn.style.color = '#2ecc71';
+            ackBtn.textContent = '✓ Диагностика зафиксирована';
+        }
+        if (compaksPanel) {
+            compaksPanel.style.borderColor = '#2ecc71';
+            compaksPanel.style.boxShadow = '0 0 10px rgba(46, 204, 113, 0.4)';
+        }
+    }
+
+    if (compaksPanel && !compaksPanel._inspectorHooked) {
+        compaksPanel._inspectorHooked = true;
+        compaksPanel.addEventListener('click', acknowledgeCompaks);
+    }
+    if (ackBtn && !ackBtn._ackHooked) {
+        ackBtn._ackHooked = true;
+        ackBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            acknowledgeCompaks();
+        });
+    }
 }
 
 function updateCompaksPanel(state, alarms) {
     const cardH1 = document.getElementById('vib-h1');
     const cardH2 = document.getElementById('vib-h2');
     
-    const h1 = state.pumps[0];
-    const h2 = state.pumps[1];
+    const h1 = (state && state.pumps && state.pumps[0]) ? state.pumps[0] : { wear_factor: 0.1, cavitation_risk: 0.0, is_running: true };
+    const h2 = (state && state.pumps && state.pumps[1]) ? state.pumps[1] : { wear_factor: 0.1, cavitation_risk: 0.0, is_running: true };
     
     // Расчёт виброскорости по ISO 10816
     let vib1 = 2.5 + h1.wear_factor * 10.0 + h1.cavitation_risk * 5.0;
@@ -39,7 +69,12 @@ function updateCompaksPanel(state, alarms) {
                           (window.activeScenarioId === 'vibration_compaks');
                           
     if (isVibScenario) {
-        vib1 = 12.8 + Math.sin(Date.now() / 400) * 1.2;
+        vib1 = 12.8 + Math.sin(Date.now() / 400) * 0.4;
+        const compaksPanel = document.getElementById('compaks-main-panel');
+        if (compaksPanel && !window.compaksInspected) {
+            compaksPanel.style.borderColor = '#ff3838';
+            compaksPanel.style.boxShadow = '0 0 15px rgba(255, 56, 56, 0.6)';
+        }
     } else {
         if (!h1.is_running) vib1 = 0.0;
         if (!h2.is_running) vib2 = 0.0;
@@ -311,3 +346,7 @@ if (!document.getElementById('compaks-css')) {
     `;
     document.head.appendChild(style);
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    initCompaksSpectrum();
+});

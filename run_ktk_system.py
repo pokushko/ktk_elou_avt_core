@@ -22,14 +22,16 @@ def main():
     os.chdir(base_dir)
     
     print("\n[1/3] Запуск бэкенда (FastAPI, Modbus TCP, Physics 10Hz, LIMS)...")
-    cmd = [sys.executable, "-m", "uvicorn", "backend.server:app", "--host", "127.0.0.1", "--port", "8888"]
+    port = 8080
+    cmd = [sys.executable, "-m", "uvicorn", "backend.server:app", "--host", "127.0.0.1", "--port", str(port)]
     proc = subprocess.Popen(cmd, cwd=base_dir)
     
     print("[2/3] Инициализация физического движка RK4 и Modbus сервера (2 сек)...")
     time.sleep(2.0)
     
-    dashboard_url = "http://127.0.0.1:8888/frontend/index.html"
-    presentation_url = "http://127.0.0.1:8888/frontend/presentation.html"
+    timestamp = int(time.time())
+    dashboard_url = f"http://127.0.0.1:{port}/frontend/index.html?t={timestamp}"
+    presentation_url = f"http://127.0.0.1:{port}/frontend/presentation.html?t={timestamp}"
     
     print("\n[3/3] Автоматический запуск браузера...")
     print(f" -> Панель Управления и Симулятора: {dashboard_url}")
